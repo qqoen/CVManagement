@@ -1,8 +1,85 @@
-﻿@{
+﻿@model CVManagement.Controllers.HomeViewModel;
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="row">
+    <div class="col-md-8">
+        <div class="text-center">
+            <h1 class="display-5">Latest positions</h1>
+        </div>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Position</th>
+                    <th>Description</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var position in Model.LatestPositions)
+                {
+                    <tr>
+                        <td>@position.Title</td>
+                        <td>@position.Description</td>
+                        <td>@Html.DisplayFor(m => position.LastUpdated)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.LatestPositions.Count == 0)
+        {
+            <p class="text-center">List is empty.</p>
+        }
+
+        <hr />
+
+        <div class="text-center">
+            <h1 class="display-5">Most popular positions</h1>
+        </div>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Position</th>
+                    <th>Description</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var position in Model.PopularPositions)
+                {
+                    <tr>
+                        <td>@position.Title</td>
+                        <td>@position.Description</td>
+                        <td>@Html.DisplayFor(m => position.LastUpdated)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.PopularPositions.Count == 0)
+        {
+            <p class="text-center">List is empty.</p>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <div class="text-center">
+            <h2>Tag Cloud</h2>
+        </div>
+
+        <hr />
+
+        <div class="text-center">
+            <h2>Statistics</h2>
+
+            <p>Total number of positions: @Model.TotalPositions</p>
+            <p>Total number of candidates: @Model.TotalCandidates</p>
+            <p>Total number of submitted CVs: @Model.TotalCVs</p>
+        </div>
+    </div>
 </div>

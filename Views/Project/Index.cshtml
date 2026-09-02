@@ -1,0 +1,46 @@
+@model List<CVManagement.Models.Project>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="d-flex gap-2 mb-3">
+    <button class="btn btn-danger" id="delete-btn">Delete</button>
+    <a class="btn btn-primary" asp-action="Create">Create New</a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th><input type="checkbox" id="select-all" /></th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Period</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td><input type="checkbox" class="project-checkbox" value="@item.ID" /></td>
+                <td><a asp-action="Details" asp-route-id="@item.ID">@Html.DisplayFor(model => item.Name)</a></td>
+                <td>
+                    @Html.DisplayFor(model => item.Description)
+                </td>
+                <td>
+                        @Html.DisplayFor(model => item.StartDate) - @Html.DisplayFor(model => item.EndDate)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (Model.Count == 0)
+{
+    <p class="text-center">List is empty.</p>
+}
+
+@section scripts
+{
+    <script src="~/js/project.js" asp-append-version="true"></script>
+}

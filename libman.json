@@ -1,0 +1,10 @@
+{
+  "version": "3.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "knockout@3.5.3",
+      "destination": "wwwroot/lib/knockout/"
+    }
+  ]
+}

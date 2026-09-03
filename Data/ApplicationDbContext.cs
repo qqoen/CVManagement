@@ -6,6 +6,7 @@ namespace CVManagement.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
+    public DbSet<CVManagement.Models.CV> CV { get; set; } = default!;
     public DbSet<CVAttribute> CVAttributes { get; set; } = default!;
 
     public DbSet<Position> Positions { get; set; } = default!;

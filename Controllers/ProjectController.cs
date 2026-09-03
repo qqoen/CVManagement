@@ -1,6 +1,7 @@
 
 using CVManagement.Data;
 using CVManagement.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ namespace CVManagement.Controllers;
 public class ProjectController : ApplicationController
 {
     private readonly ApplicationDbContext context;
+
     private readonly UserManager<ApplicationUser> userManager;
 
     public ProjectController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
@@ -38,12 +40,14 @@ public class ProjectController : ApplicationController
     }
 
     [HttpGet]
+    [Authorize(Roles = IdentitySeeder.CandidateRole)]
     public IActionResult Create()
     {
         return View();
     }
 
     [HttpPost]
+    [Authorize(Roles = IdentitySeeder.CandidateRole)]
     public async Task<IActionResult> Create(Project project)
     {
         if (ModelState.IsValid)
@@ -60,6 +64,7 @@ public class ProjectController : ApplicationController
     }
 
     [HttpGet]
+    [Authorize(Roles = IdentitySeeder.CandidateRole)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -69,6 +74,7 @@ public class ProjectController : ApplicationController
     }
 
     [HttpPost]
+    [Authorize(Roles = IdentitySeeder.CandidateRole)]
     public async Task<IActionResult> Edit(int? id, Project project)
     {
         if (id != project.ID) return NotFound();
@@ -89,6 +95,7 @@ public class ProjectController : ApplicationController
     }
 
     [HttpPost]
+    [Authorize(Roles = IdentitySeeder.CandidateRole)]
     public IActionResult Delete([FromBody] List<int> selectedIds)
     {
         foreach (var id in selectedIds)

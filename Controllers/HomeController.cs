@@ -1,5 +1,8 @@
+using CVManagement.Data;
 using CVManagement.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace CVManagement.Controllers;
@@ -19,20 +22,34 @@ public class HomeViewModel
 
 public class HomeController : Controller
 {
-    [HttpGet]
-    public IActionResult Index()
+    private readonly ApplicationDbContext context;
+
+    private readonly UserManager<ApplicationUser> userManager;
+
+    public HomeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     {
-        var positions = new List<Position>();
-        positions.Add(new Position() { Title = "QA" });
-        positions.Add(new Position() { Title = "DBA" });
+        this.context = context;
+        this.userManager = userManager;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Index()
+    {
+        var positions = await context.Positions
+            .OrderByDescending(p => p.LastUpdated)
+            .Take(5)
+            .ToListAsync();
+        var totalPositions = await context.Positions.CountAsync();
+        var totalCandidates = await userManager.GetUsersInRoleAsync(IdentitySeeder.CandidateRole);
+        var totalCVs = await context.CV.CountAsync();
 
         return View(new HomeViewModel()
         {
             LatestPositions = positions,
             PopularPositions = positions,
-            TotalPositions = 10,
-            TotalCandidates = 16,
-            TotalCVs = 5,
+            TotalPositions = totalPositions,
+            TotalCandidates = totalCandidates.Count,
+            TotalCVs = totalCVs,
         });
     }
 

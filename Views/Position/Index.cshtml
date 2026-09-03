@@ -1,20 +1,33 @@
-﻿@model List<CVManagement.Models.Position>;
+﻿@using CVManagement.Data
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@model List<CVManagement.Models.Position>;
 
 @{
-    ViewData["Title"] = "Positions";
+    ViewData["Title"] = "All Positions";
+    var isSignedIn = SignInManager.IsSignedIn(User);
+    var isRecruiter = User.IsInRole(IdentitySeeder.RecruiterRole);
 }
 
-<div class="d-flex gap-2 mb-3">
-    <button class="btn btn-danger" id="delete-btn">Delete</button>
-    <a class="btn btn-primary" asp-action="Create">Create New</a>
-</div>
+<h1>@ViewData["Title"]</h1>
+
+<hr />
+
+@if (isSignedIn && isRecruiter)
+{
+    <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-danger" id="delete-btn">Delete</button>
+        <a class="btn btn-primary" asp-action="Create">Create New</a>
+    </div>
+}
 
 <table class="table table-striped" id="positions-table">
     <thead>
         <tr>
-            <th>
-                <input type="checkbox" id="select-all" />
-            </th>
+            @if (isSignedIn && isRecruiter)
+            {
+                <th><input type="checkbox" id="select-all" /></th>
+            }
             <th>Position</th>
             <th>Description</th>
             <th>Max Projects</th>
@@ -25,10 +38,13 @@
         @foreach (var position in Model)
         {
             <tr>
+                @if (isSignedIn && isRecruiter)
+                {
+                    <td><input type="checkbox" class="position-checkbox" value="@position.ID" /></td>
+                }
                 <td>
-                    <input type="checkbox" class="position-checkbox" value="@position.ID" />
+                    <a asp-action="Details" asp-route-id="@position.ID">@position.Title</a>
                 </td>
-                <td><a asp-action="Edit" asp-route-id="@position.ID">@position.Title</a></td>
                 <td>@position.Description</td>
                 <td>@position.MaxProjects</td>
                 <td>@Html.DisplayFor(m => position.LastUpdated)</td>

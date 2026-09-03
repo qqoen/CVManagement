@@ -1,9 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace CVManagement.Models;
 
-[Index(nameof(Title), IsUnique = true)]
 public class Position
 {
     public int ID { get; set; }

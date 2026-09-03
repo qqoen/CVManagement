@@ -33,6 +33,15 @@ public class PositionController : ApplicationController
     }
 
     [HttpGet]
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null) return NotFound();
+        var position = await context.Positions.FirstOrDefaultAsync(m => m.ID == id);
+        if (position == null) return NotFound();
+        return View(position);
+    }
+
+    [HttpGet]
     public IActionResult Create()
     {
         return View();
@@ -99,5 +108,31 @@ public class PositionController : ApplicationController
         }
 
         return View(position);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Duplicate(int id)
+    {
+        var position = await context.Positions.FirstOrDefaultAsync(m => m.ID == id);
+        if (position == null) return NotFound();
+
+        try
+        {
+            var clone = new Position()
+            {
+                Title = position.Title,
+                Description = position.Description,
+                MaxProjects = position.MaxProjects,
+                LastUpdated = DateTimeOffset.Now,
+            };
+            context.Add(clone);
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            HandleDbException(ex);
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 }

@@ -22,7 +22,7 @@
                 @foreach (var position in Model.LatestPositions)
                 {
                     <tr>
-                        <td>@position.Title</td>
+                        <td><a asp-controller="Position" asp-action="Details" asp-route-id="@position.ID">@position.Title</a></td>
                         <td>@position.Description</td>
                         <td>@Html.DisplayFor(m => position.LastUpdated)</td>
                     </tr>
@@ -53,7 +53,7 @@
                 @foreach (var position in Model.PopularPositions)
                 {
                     <tr>
-                        <td>@position.Title</td>
+                        <td><a asp-controller="Position" asp-action="Details" asp-route-id="@position.ID">@position.Title</a></td>
                         <td>@position.Description</td>
                         <td>@Html.DisplayFor(m => position.LastUpdated)</td>
                     </tr>

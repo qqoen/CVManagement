@@ -6,8 +6,11 @@ namespace CVManagement.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
-    public DbSet<CVManagement.Models.CV> CV { get; set; } = default!;
+    public DbSet<CV> CV { get; set; } = default!;
+
     public DbSet<CVAttribute> CVAttributes { get; set; } = default!;
+
+    public DbSet<CVAttributeValue> CVAttributeValues { get; set; } = default!;
 
     public DbSet<Position> Positions { get; set; } = default!;
 
@@ -31,10 +34,24 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<ApplicationUser>()
+            .HasMany(e => e.CVAttributeValues)
+            .WithOne(e => e.User)
+            .HasForeignKey(e => e.UserId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Position>()
             .HasMany(e => e.CVs)
             .WithOne(e => e.Position)
             .HasForeignKey(e => e.PositionID)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CVAttribute>()
+            .HasMany(e => e.CVAttributeValues)
+            .WithOne(e => e.CVAttribute)
+            .HasForeignKey(e => e.CVAttributeID)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
     }

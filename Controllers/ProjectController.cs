@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CVManagement.Controllers;
 
+[Authorize]
 public class ProjectController : ApplicationController
 {
     private readonly ApplicationDbContext context;
@@ -52,9 +53,7 @@ public class ProjectController : ApplicationController
     {
         if (ModelState.IsValid)
         {
-            var user = (await userManager.GetUserAsync(User))!;
-            project.UserId = user.Id;
-            project.User = user;
+            project.UserId = userManager.GetUserId(User);
             context.Add(project);
             await context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

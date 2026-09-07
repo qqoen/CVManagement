@@ -1,19 +1,35 @@
-﻿@model List<CVManagement.Models.CVAttribute>;
+﻿@using CVManagement.Data
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@model List<CVManagement.Models.CVAttribute>;
 
 @{
     ViewData["Title"] = "Attributes";
+    var isSignedIn = SignInManager.IsSignedIn(User);
+    var isRecruiter = User.IsInRole(IdentitySeeder.RecruiterRole);
+    var isCandidate = User.IsInRole(IdentitySeeder.CandidateRole);
 }
 
-<div class="d-flex gap-2 mb-3">
-    <button class="btn btn-danger" id="delete-btn">Delete</button>
-    <a class="btn btn-primary" asp-action="Create">Create New</a>
-</div>
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+@if (isSignedIn && isRecruiter)
+{
+    <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-danger" id="delete-btn">Delete</button>
+        <a class="btn btn-primary" asp-action="Create">Create New</a>
+    </div>
+    <hr />
+}
 
 <table class="table table-striped">
     <thead>
         <tr>
             <th>
-                <input type="checkbox" id="select-all" />
+                @if (isSignedIn && isRecruiter)
+                {
+                    <input type="checkbox" id="select-all" />            
+                }
             </th>
             <th>Name</th>
             <th>Description</th>
@@ -22,16 +38,32 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var position in Model)
+        @foreach (var cvattribute in Model)
         {
             <tr>
                 <td>
-                    <input type="checkbox" class="attribute-checkbox" value="@position.ID" />
+                    @if (isSignedIn && isRecruiter)
+                    {
+                        <input type="checkbox" class="attribute-checkbox" value="@cvattribute.ID" />                
+                    }
                 </td>
-                <td><a asp-action="Edit" asp-route-id="@position.ID">@position.Name</a></td>
-                <td>@position.Description</td>
-                <td>@position.Category</td>
-                <td>@position.DataType</td>
+                <td>
+                    @if (isSignedIn && isRecruiter)
+                    {
+                        <a asp-action="Edit" asp-route-id="@cvattribute.ID">@cvattribute.Name</a>
+                    }
+                    else if (isSignedIn && isCandidate)
+                    {
+                        <a asp-action="FillValue" asp-route-id="@cvattribute.ID">@cvattribute.Name</a>
+                    }
+                    else
+                    {
+                        @cvattribute.Name
+                    }
+                </td>
+                <td>@cvattribute.Description</td>
+                <td>@cvattribute.Category</td>
+                <td>@cvattribute.DataType</td>
             </tr>
         }
     </tbody>

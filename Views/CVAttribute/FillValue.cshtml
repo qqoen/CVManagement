@@ -1,0 +1,53 @@
+﻿@model CVManagement.Controllers.FillValueViewModel;
+
+@{
+    ViewData["Title"] = "Fill Attribute";
+}
+
+<h1>@ViewData["Title"]</h1>
+<a asp-action="Index">Back to List</a>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+        <form asp-action="FillValue">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <input type="hidden" asp-for="ValueID" />
+
+            <div class="form-group">
+                <label class="control-label">Attribute Name</label>
+                <input asp-for="Name" class="form-control" disabled />
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Attribute Description</label>
+                <textarea asp-for="Description" class="form-control" rows="5" disabled></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Attribute Category</label>
+                @Html.DropDownList("Category", Html.GetEnumSelectList(typeof(CVAttributeCategory)), new { @class = "form-control", disabled = true })
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Value</label>
+
+                @if (Model.DataType == CVAttributeDataType.Boolean)
+                {
+                    <input type="checkbox" asp-for="Value" class="form-control" />
+                }
+                else
+                {
+                    <input asp-for="Value" class="form-control" />
+                }
+            </div>
+
+            <div class="form-group mt-2">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>

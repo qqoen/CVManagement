@@ -140,6 +140,34 @@ namespace CVManagement.Migrations
                     b.ToTable("CVAttributes");
                 });
 
+            modelBuilder.Entity("CVManagement.Models.CVAttributeValue", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ID"));
+
+                    b.Property<int>("CVAttributeID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("CVAttributeID");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CVAttributeValues");
+                });
+
             modelBuilder.Entity("CVManagement.Models.Position", b =>
                 {
                     b.Property<int>("ID")
@@ -355,6 +383,25 @@ namespace CVManagement.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CVManagement.Models.CVAttributeValue", b =>
+                {
+                    b.HasOne("CVManagement.Models.CVAttribute", "CVAttribute")
+                        .WithMany("CVAttributeValues")
+                        .HasForeignKey("CVAttributeID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CVManagement.Data.ApplicationUser", "User")
+                        .WithMany("CVAttributeValues")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CVAttribute");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CVManagement.Models.Project", b =>
                 {
                     b.HasOne("CVManagement.Data.ApplicationUser", "User")
@@ -419,9 +466,16 @@ namespace CVManagement.Migrations
 
             modelBuilder.Entity("CVManagement.Data.ApplicationUser", b =>
                 {
+                    b.Navigation("CVAttributeValues");
+
                     b.Navigation("CVs");
 
                     b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("CVManagement.Models.CVAttribute", b =>
+                {
+                    b.Navigation("CVAttributeValues");
                 });
 
             modelBuilder.Entity("CVManagement.Models.Position", b =>

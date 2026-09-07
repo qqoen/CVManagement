@@ -14,4 +14,6 @@ public class CVAttribute
     public CVAttributeCategory Category { get; set; }
 
     public CVAttributeDataType DataType { get; set; }
+
+    public ICollection<CVAttributeValue> CVAttributeValues { get; set; } = new List<CVAttributeValue>();
 }

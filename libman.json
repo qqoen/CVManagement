@@ -5,6 +5,10 @@
     {
       "library": "knockout@3.5.3",
       "destination": "wwwroot/lib/knockout/"
+    },
+    {
+      "library": "bootstrap-icons@1.13.1",
+      "destination": "wwwroot/lib/bootstrap-icons/"
     }
   ]
 }

@@ -1,12 +1,14 @@
 
 using CVManagement.Data;
 using CVManagement.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace CVManagement.Controllers;
 
+[Authorize]
 public class CVController : ApplicationController
 {
     private readonly ApplicationDbContext context;

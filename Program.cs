@@ -30,7 +30,10 @@ var identityBuilder = builder.Services.AddDefaultIdentity<ApplicationUser>((opti
 identityBuilder.AddRoles<IdentityRole>();
 identityBuilder.AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews((options) =>
+{
+    options.ModelBindingMessageProvider.SetValueMustNotBeNullAccessor(_ => "The field is required.");
+});
 
 var app = builder.Build();
 

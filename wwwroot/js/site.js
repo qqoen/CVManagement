@@ -27,3 +27,17 @@ class TableSelector {
         }
     }
 }
+
+function initMarkdown(selector, canEdit=true) {
+    $(selector).bsMarkdownEditor({
+        minHeight: 240,
+        preview: canEdit,
+        mode: canEdit ? 'editor' : 'preview',
+        resize: 'vertical',
+        size: 'sm',
+        btnClass: 'border-0',
+        wrapperClass: null,
+        actions: canEdit ? 'all' : [],
+        lang: 'en',
+    });
+}

@@ -5,14 +5,12 @@
 }
 
 <h1>@ViewData["Title"]</h1>
-
 <hr />
 
 <div class="d-flex gap-2 mb-3">
     <button class="btn btn-danger" id="delete-btn">Delete</button>
     <a class="btn btn-primary" asp-action="Create">Create New</a>
 </div>
-
 <hr />
 
 <table class="table">
@@ -20,7 +18,6 @@
         <tr>
             <th><input type="checkbox" id="select-all" /></th>
             <th>Name</th>
-            <th>Description</th>
             <th>Period</th>
         </tr>
     </thead>
@@ -30,9 +27,6 @@
             <tr>
                 <td><input type="checkbox" class="project-checkbox" value="@item.ID" /></td>
                 <td><a asp-action="Details" asp-route-id="@item.ID">@Html.DisplayFor(model => item.Name)</a></td>
-                <td>
-                    @Html.DisplayFor(model => item.Description)
-                </td>
                 <td>
                     @Html.DisplayFor(model => item.StartDate) - @Html.DisplayFor(model => item.EndDate)
                 </td>

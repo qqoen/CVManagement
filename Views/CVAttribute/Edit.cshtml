@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Edit";
+    var categories = ViewData["Categories"] as IEnumerable<SelectListItem>;
 }
 
 <h1>Edit</h1>
@@ -25,7 +26,7 @@
             </div>
             <div class="form-group">
                 <label asp-for="Category" class="control-label"></label>
-                @Html.DropDownList("Category", Html.GetEnumSelectList(typeof(CVAttributeCategory)), new { @class = "form-control" })
+                @Html.DropDownList("CategoryID", categories, new { @class = "form-control" })
                 <span asp-validation-for="Category" class="text-danger"></span>
             </div>
             <div class="form-group">

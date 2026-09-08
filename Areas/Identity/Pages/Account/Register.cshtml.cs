@@ -22,7 +22,7 @@ public class RegisterModel : PageModel
 
     public IList<AuthenticationScheme>? ExternalLogins { get; set; }
 
-    public SelectList Roles => new SelectList(IdentitySeeder.IdentityRoles);
+    public SelectList Roles => new SelectList(DbSeeder.IdentityRoles);
 
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;

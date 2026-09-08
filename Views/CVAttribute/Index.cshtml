@@ -6,8 +6,8 @@
 @{
     ViewData["Title"] = "Attributes";
     var isSignedIn = SignInManager.IsSignedIn(User);
-    var isRecruiter = User.IsInRole(IdentitySeeder.RecruiterRole);
-    var isCandidate = User.IsInRole(IdentitySeeder.CandidateRole);
+    var isRecruiter = User.IsInRole(DbSeeder.RecruiterRole);
+    var isCandidate = User.IsInRole(DbSeeder.CandidateRole);
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -62,7 +62,7 @@
                     }
                 </td>
                 <td>@cvattribute.Description</td>
-                <td>@cvattribute.Category</td>
+                <td>@cvattribute.Category?.Name</td>
                 <td>@cvattribute.DataType</td>
             </tr>
         }

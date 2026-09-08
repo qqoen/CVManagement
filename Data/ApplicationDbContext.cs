@@ -16,6 +16,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<Project> Project { get; set; } = default!;
 
+    public DbSet<Category> Categories { get; set; } = default!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -52,6 +54,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasMany(e => e.CVAttributeValues)
             .WithOne(e => e.CVAttribute)
             .HasForeignKey(e => e.CVAttributeID)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Category>()
+            .HasMany(e => e.CVAttributes)
+            .WithOne(e => e.Category)
+            .HasForeignKey(e => e.CategoryID)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
     }

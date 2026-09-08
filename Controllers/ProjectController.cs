@@ -22,6 +22,7 @@ public class ProjectController : ApplicationController
     }
 
     [HttpGet]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Index()
     {
         var userId = userManager.GetUserId(User);
@@ -37,18 +38,22 @@ public class ProjectController : ApplicationController
         if (id == null) return NotFound();
         var project = await context.Project.FirstOrDefaultAsync(m => m.ID == id);
         if (project == null) return NotFound();
-        return View(project);
+        var userId = userManager.GetUserId(User);
+        if (project.UserId == userId || User.IsInRole(DbSeeder.RecruiterRole))
+            return View(project);
+        else
+            return NotFound();
     }
 
     [HttpGet]
-    [Authorize(Roles = IdentitySeeder.CandidateRole)]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public IActionResult Create()
     {
         return View();
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.CandidateRole)]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Create(Project project)
     {
         if (ModelState.IsValid)
@@ -63,20 +68,24 @@ public class ProjectController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = IdentitySeeder.CandidateRole)]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
         var project = await context.Project.FindAsync(id);
         if (project == null) return NotFound();
+        var userId = userManager.GetUserId(User);
+        if (project.UserId != userId) return NotFound();
         return View(project);
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.CandidateRole)]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Edit(int? id, Project project)
     {
         if (id != project.ID) return NotFound();
+        var userId = userManager.GetUserId(User);
+        if (project.UserId != userId) return NotFound();
         if (ModelState.IsValid)
         {
             try
@@ -94,12 +103,14 @@ public class ProjectController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.CandidateRole)]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public IActionResult Delete([FromBody] List<int> selectedIds)
     {
+        var userId = userManager.GetUserId(User);
         foreach (var id in selectedIds)
         {
             var project = context.Project.Find(id)!;
+            if (project.UserId != userId) return NotFound();
             context.Remove(project);
         }
         context.SaveChanges();

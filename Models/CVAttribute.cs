@@ -11,7 +11,9 @@ public class CVAttribute
 
     public string Description { get; set; } = string.Empty;
 
-    public CVAttributeCategory Category { get; set; }
+    public int? CategoryID { get; set; }
+
+    public Category? Category { get; set; }
 
     public CVAttributeDataType DataType { get; set; }
 

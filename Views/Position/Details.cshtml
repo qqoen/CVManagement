@@ -6,8 +6,8 @@
 @{
     ViewData["Title"] = "Details";
     var isSignedIn = SignInManager.IsSignedIn(User);
-    var isRecruiter = User.IsInRole(IdentitySeeder.RecruiterRole);
-    var isCandidate = User.IsInRole(IdentitySeeder.CandidateRole);
+    var isRecruiter = User.IsInRole(DbSeeder.RecruiterRole);
+    var isCandidate = User.IsInRole(DbSeeder.CandidateRole);
 }
 
 <h1>Position Details</h1>

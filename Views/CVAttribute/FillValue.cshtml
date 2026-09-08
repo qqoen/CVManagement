@@ -16,6 +16,7 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <input type="hidden" asp-for="ValueID" />
+            <input type="hidden" asp-for="DataType" />
 
             <div class="form-group">
                 <label class="control-label">Attribute Name</label>
@@ -29,19 +30,42 @@
 
             <div class="form-group">
                 <label class="control-label">Attribute Category</label>
-                @Html.DropDownList("Category", Html.GetEnumSelectList(typeof(CVAttributeCategory)), new { @class = "form-control", disabled = true })
+                <input asp-for="CategoryName" class="form-control" disabled />
             </div>
 
             <div class="form-group">
-                <label class="control-label">Value</label>
-
-                @if (Model.DataType == CVAttributeDataType.Boolean)
+                @if (Model.DataType == CVAttributeDataType.Text)
                 {
-                    <input type="checkbox" asp-for="Value" class="form-control" />
+                    <label class="control-label">Text</label>
+                    <textarea asp-for="Value1" class="form-control"></textarea>
+                }
+                else if (Model.DataType == CVAttributeDataType.Numeric)
+                {
+                    <label class="control-label">Number</label>
+                    <input type="number" asp-for="Value1" class="form-control" />
+                }
+                else if (Model.DataType == CVAttributeDataType.Date)
+                {
+                    <label class="control-label">Date</label>
+                    <input type="date" asp-for="Value1" class="form-control" />
+                }
+                else if (Model.DataType == CVAttributeDataType.Period)
+                {
+                    <label class="control-label">Start Date</label>
+                    <input type="date" asp-for="Value1" class="form-control" />
+
+                    <label class="control-label">End Date</label>
+                    <input type="date" asp-for="Value2" class="form-control" />
+                }
+                else if (Model.DataType == CVAttributeDataType.Boolean)
+                {
+                    <label class="control-label">Value</label>
+                    <input type="checkbox" asp-for="Value1" class="form-control" />
                 }
                 else
                 {
-                    <input asp-for="Value" class="form-control" />
+                    <label class="control-label">Value</label>
+                    <input asp-for="Value1" class="form-control" />
                 }
             </div>
 

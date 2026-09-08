@@ -6,7 +6,7 @@
 @{
     ViewData["Title"] = "All Positions";
     var isSignedIn = SignInManager.IsSignedIn(User);
-    var isRecruiter = User.IsInRole(IdentitySeeder.RecruiterRole);
+    var isRecruiter = User.IsInRole(DbSeeder.RecruiterRole);
 }
 
 <h1>@ViewData["Title"]</h1>

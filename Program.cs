@@ -57,7 +57,7 @@ app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
-    await IdentitySeeder.SeedRolesAsync(scope.ServiceProvider);
+    await DbSeeder.SeedAsync(scope.ServiceProvider);
 }
 
 app.MapStaticAssets();

@@ -3,6 +3,7 @@ using CVManagement.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CVManagement.Controllers;
@@ -11,15 +12,60 @@ public class FillValueViewModel
 {
     public int ValueID { get; set; }
 
-    public required string Name { get; set; }
+    public string Name { get; set; }
 
-    public required string Description { get; set; }
+    public string Description { get; set; }
 
-    public CVAttributeCategory Category { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
 
     public CVAttributeDataType DataType { get; set; }
 
-    public string Value { get; set; } = string.Empty;
+    public string Value1 { get; set; } = string.Empty;
+
+    public string Value2 { get; set; } = string.Empty;
+
+    public static FillValueViewModel Create(CVAttribute attribute, CVAttributeValue? attributeValue)
+    {
+        var (value1, value2) = ParseValues(attribute.DataType, attributeValue?.Value ?? string.Empty);
+
+        return new FillValueViewModel()
+        {
+            ValueID = attributeValue?.ID ?? default,
+            Name = attribute.Name,
+            Description = attribute.Description,
+            CategoryName = attribute.Category!.Name,
+            DataType = attribute.DataType,
+            Value1 = value1,
+            Value2 = value2,
+        };
+    }
+
+    private static (string, string) ParseValues(CVAttributeDataType dataType, string value)
+    {
+        if (value != string.Empty && dataType == CVAttributeDataType.Period)
+        {
+            var parts = value.Split(',');
+
+            if (parts.Length > 1)
+                return (parts[0], parts[1]);
+            else
+                return (parts[0], string.Empty);
+        }
+        else
+        {
+            return (value, string.Empty);
+        }
+    }
+
+    public string GetCompoundValue()
+    {
+        if (DataType == CVAttributeDataType.Period)
+        {
+            return Value1 + "," + Value2;
+        }
+
+        return Value1;
+    }
 }
 
 [Authorize]
@@ -38,19 +84,31 @@ public class CVAttributeController : ApplicationController
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var attributes = await context.CVAttributes.ToListAsync();
+        var attributes = await context.CVAttributes
+            .Include(a => a.Category)
+            .ToListAsync();
         return View(attributes);
     }
 
     [HttpGet]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
-    public IActionResult Create()
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
+    public async Task<IActionResult> Create()
     {
+        await PrepareCategories();
         return View();
     }
 
+    private async Task PrepareCategories()
+    {
+        var categories = await context.Categories.ToListAsync();
+        var selectList = new List<SelectListItem>();
+        foreach (var category in categories)
+            selectList.Add(new SelectListItem(category.Name, category.ID.ToString()));
+        ViewData["Categories"] = selectList;
+    }
+
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Create(CVAttribute attribute)
     {
         try
@@ -71,7 +129,7 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public IActionResult Delete([FromBody] List<int> selectedIds)
     {
         foreach (var id in selectedIds)
@@ -84,16 +142,17 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Edit(int id)
     {
         var attribute = await context.CVAttributes.FirstOrDefaultAsync(s => s.ID == id);
         if (attribute == null) return NotFound();
+        await PrepareCategories();
         return View(attribute);
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Edit(int id, CVAttribute attribute)
     {
         if (id != attribute.ID) return NotFound();
@@ -116,28 +175,20 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = IdentitySeeder.CandidateRole)]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> FillValue(int id)
     {
-        var attribute = await context.CVAttributes.FirstOrDefaultAsync(s => s.ID == id);
+        var attribute = await context.CVAttributes
+            .Include(a => a.Category)
+            .FirstOrDefaultAsync(s => s.ID == id);
         if (attribute == null) return NotFound();
         var userId = userManager.GetUserId(User);
         var attributeValue = await context.CVAttributeValues.FirstOrDefaultAsync(v => v.CVAttributeID == id && v.UserId == userId);
-
-        //ModelState.Clear();
-        return View(new FillValueViewModel()
-        {
-            ValueID = attributeValue?.ID ?? default,
-            Name = attribute.Name,
-            Description = attribute.Description,
-            Category = attribute.Category,
-            DataType = attribute.DataType,
-            Value = attributeValue?.Value ?? string.Empty,
-        });
+        return View(FillValueViewModel.Create(attribute, attributeValue));
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.CandidateRole)]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> FillValue(int id, FillValueViewModel fillValueViewModel)
     {
         var attribute = await context.CVAttributes.FirstOrDefaultAsync(s => s.ID == id);
@@ -146,7 +197,7 @@ public class CVAttributeController : ApplicationController
 
         if (attributeValue != null)
         {
-            attributeValue.Value = fillValueViewModel.Value;
+            attributeValue.Value = fillValueViewModel.GetCompoundValue();
             context.Update(attributeValue);
         }
         else
@@ -158,7 +209,7 @@ public class CVAttributeController : ApplicationController
                 CVAttributeID = attribute.ID,
                 User = user,
                 UserId = user.Id,
-                Value = fillValueViewModel.Value,
+                Value = fillValueViewModel.GetCompoundValue(),
             };
             context.Add(attributeValue);
         }

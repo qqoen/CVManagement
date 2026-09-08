@@ -40,7 +40,7 @@ public class HomeController : Controller
             .Take(5)
             .ToListAsync();
         var totalPositions = await context.Positions.CountAsync();
-        var totalCandidates = await userManager.GetUsersInRoleAsync(IdentitySeeder.CandidateRole);
+        var totalCandidates = await userManager.GetUsersInRoleAsync(DbSeeder.CandidateRole);
         var totalCVs = await context.CV.CountAsync();
 
         return View(new HomeViewModel()

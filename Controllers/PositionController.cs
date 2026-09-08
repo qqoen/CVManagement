@@ -43,14 +43,14 @@ public class PositionController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public IActionResult Create()
     {
         return View();
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Create(Position position)
     {
         try
@@ -72,7 +72,7 @@ public class PositionController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public IActionResult Delete([FromBody] List<int> selectedIds)
     {
         foreach (var id in selectedIds)
@@ -85,7 +85,7 @@ public class PositionController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Edit(int id)
     {
         var position = await context.Positions.FirstOrDefaultAsync(s => s.ID == id);
@@ -94,7 +94,7 @@ public class PositionController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Edit(int id, Position position)
     {
         if (id != position.ID) return NotFound();
@@ -117,7 +117,7 @@ public class PositionController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = IdentitySeeder.RecruiterRole)]
+    [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Duplicate(int id)
     {
         var position = await context.Positions.FirstOrDefaultAsync(m => m.ID == id);

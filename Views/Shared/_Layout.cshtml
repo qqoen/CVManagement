@@ -39,7 +39,7 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="CVAttribute" asp-action="Index">Attributes</a>
                             </li>
                         }
-                        @if (SignInManager.IsSignedIn(User) && User.IsInRole(IdentitySeeder.CandidateRole))
+                        @if (SignInManager.IsSignedIn(User) && User.IsInRole(DbSeeder.CandidateRole))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="CV" asp-action="Index">My CVs</a>

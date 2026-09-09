@@ -1,5 +1,4 @@
 using CVManagement.Data;
-using CVManagement.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

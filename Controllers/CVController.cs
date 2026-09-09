@@ -109,14 +109,11 @@ public class CVController : ApplicationController
     }
 
     [HttpPost]
-    public IActionResult Delete([FromBody] List<int> selectedIds)
+    public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        foreach (var id in selectedIds)
-        {
-            var cv = context.CV.Find(id)!;
-            context.Remove(cv);
-        }
-        context.SaveChanges();
+        var cvs = context.CV.Where(cv => selectedIds.Contains(cv.ID));
+        context.RemoveRange(cvs);
+        await context.SaveChangesAsync();
         return Ok();
     }
 }

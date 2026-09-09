@@ -59,8 +59,12 @@
                 }
                 else if (Model.DataType == CVAttributeDataType.Boolean)
                 {
-                    <label class="control-label">Value</label>
-                    <input type="checkbox" asp-for="Value1" class="form-control" />
+                    <div class="form-check">
+                        <input asp-for="BoolValue" class="form-check-input" type="checkbox" id="checkDefault">
+                        <label class="form-check-label" for="checkDefault">
+                            Value
+                        </label>
+                    </div>
                 }
                 else
                 {

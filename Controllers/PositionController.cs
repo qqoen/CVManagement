@@ -29,7 +29,9 @@ public class PositionController : ApplicationController
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var positions = await context.Positions.ToListAsync();
+        var positions = await context.Positions
+            .OrderBy(p => p.Title)
+            .ToListAsync();
         return View(positions);
     }
 
@@ -73,14 +75,11 @@ public class PositionController : ApplicationController
 
     [HttpPost]
     [Authorize(Roles = DbSeeder.RecruiterRole)]
-    public IActionResult Delete([FromBody] List<int> selectedIds)
+    public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        foreach (var id in selectedIds)
-        {
-            var position = context.Positions.Find(id)!;
-            context.Remove(position);
-        }
-        context.SaveChanges();
+        var positions = context.Positions.Where(p => selectedIds.Contains(p.ID));
+        context.RemoveRange(positions);
+        await context.SaveChangesAsync();
         return Ok();
     }
 

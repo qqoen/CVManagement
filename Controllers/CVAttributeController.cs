@@ -24,9 +24,11 @@ public class FillValueViewModel
 
     public string Value2 { get; set; } = string.Empty;
 
+    public bool BoolValue { get; set; }
+
     public static FillValueViewModel Create(CVAttribute attribute, CVAttributeValue? attributeValue)
     {
-        var (value1, value2) = ParseValues(attribute.DataType, attributeValue?.Value ?? string.Empty);
+        var (value1, value2, boolVal) = ParseValues(attribute.DataType, attributeValue?.Value ?? string.Empty);
 
         return new FillValueViewModel()
         {
@@ -37,32 +39,39 @@ public class FillValueViewModel
             DataType = attribute.DataType,
             Value1 = value1,
             Value2 = value2,
+            BoolValue = boolVal,
         };
     }
 
-    private static (string, string) ParseValues(CVAttributeDataType dataType, string value)
+    private static (string, string, bool) ParseValues(CVAttributeDataType dataType, string value)
     {
         if (value != string.Empty && dataType == CVAttributeDataType.Period)
         {
             var parts = value.Split(',');
 
             if (parts.Length > 1)
-                return (parts[0], parts[1]);
+                return (parts[0], parts[1], false);
             else
-                return (parts[0], string.Empty);
+                return (parts[0], string.Empty, false);
+        }
+        else if (dataType == CVAttributeDataType.Boolean)
+        {
+            var boolVal = value == string.Empty ? false : bool.Parse(value);
+            return (string.Empty, string.Empty, boolVal);
         }
         else
         {
-            return (value, string.Empty);
+            return (value, string.Empty, false);
         }
     }
 
-    public string GetCompoundValue()
+    public string SerializeValue()
     {
         if (DataType == CVAttributeDataType.Period)
-        {
             return Value1 + "," + Value2;
-        }
+
+        if (DataType == CVAttributeDataType.Boolean)
+            return BoolValue.ToString();
 
         return Value1;
     }
@@ -85,6 +94,7 @@ public class CVAttributeController : ApplicationController
     public async Task<IActionResult> Index()
     {
         var attributes = await context.CVAttributes
+            .OrderBy(a => a.Name)
             .Include(a => a.Category)
             .ToListAsync();
         return View(attributes);
@@ -130,14 +140,11 @@ public class CVAttributeController : ApplicationController
 
     [HttpPost]
     [Authorize(Roles = DbSeeder.RecruiterRole)]
-    public IActionResult Delete([FromBody] List<int> selectedIds)
+    public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        foreach (var id in selectedIds)
-        {
-            var attribute = context.CVAttributes.Find(id)!;
-            context.CVAttributes.Remove(attribute);
-        }
-        context.SaveChanges();
+        var attributes = context.CVAttributes.Where(a => !a.IsMandatory && selectedIds.Contains(a.ID));
+        context.RemoveRange(attributes);
+        await context.SaveChangesAsync();
         return Ok();
     }
 
@@ -197,7 +204,7 @@ public class CVAttributeController : ApplicationController
 
         if (attributeValue != null)
         {
-            attributeValue.Value = fillValueViewModel.GetCompoundValue();
+            attributeValue.Value = fillValueViewModel.SerializeValue();
             context.Update(attributeValue);
         }
         else
@@ -209,7 +216,7 @@ public class CVAttributeController : ApplicationController
                 CVAttributeID = attribute.ID,
                 User = user,
                 UserId = user.Id,
-                Value = fillValueViewModel.GetCompoundValue(),
+                Value = fillValueViewModel.SerializeValue(),
             };
             context.Add(attributeValue);
         }

@@ -28,6 +28,7 @@ public class ProjectController : ApplicationController
         var userId = userManager.GetUserId(User);
         var projects = await context.Project
             .Where(p => p.UserId == userId)
+            .OrderBy(p => p.Name)
             .ToListAsync();
         return View(projects);
     }
@@ -104,16 +105,12 @@ public class ProjectController : ApplicationController
 
     [HttpPost]
     [Authorize(Roles = DbSeeder.CandidateRole)]
-    public IActionResult Delete([FromBody] List<int> selectedIds)
+    public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
         var userId = userManager.GetUserId(User);
-        foreach (var id in selectedIds)
-        {
-            var project = context.Project.Find(id)!;
-            if (project.UserId != userId) return NotFound();
-            context.Remove(project);
-        }
-        context.SaveChanges();
+        var projects = context.Project.Where(p => p.UserId == userId && selectedIds.Contains(p.ID));
+        context.RemoveRange(projects);
+        await context.SaveChangesAsync();
         return Ok();
     }
 }

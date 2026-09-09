@@ -11,6 +11,8 @@ public class CVAttribute
 
     public string Description { get; set; } = string.Empty;
 
+    public bool IsMandatory { get; set; }
+
     public int? CategoryID { get; set; }
 
     public Category? Category { get; set; }

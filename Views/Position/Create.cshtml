@@ -1,11 +1,11 @@
-@model CVManagement.Models.Position;
+@model CVManagement.Controllers.PositionViewModel;
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Position";
+    var tags = ViewData["TagList"] as IEnumerable<SelectListItem>;
 }
 
-<h1 class="text-center">Create Position</h1>
-
+<h1 class="text-center">@ViewData["Title"]</h1>
 <hr />
 
 <div class="row">
@@ -32,16 +32,13 @@
                 <span asp-validation-for="MaxProjects" class="text-danger"></span>
             </div>
 
-            @* <div class="form-group">
+            <div class="form-group">
                 <label asp-for="Tags" class="control-label">Project Tags</label>
-                <select asp-for="Tags" class="form-control" id="project-tags" multiple data-allow-clear="true" data-allow-new="true">
-                    <option disabled hidden value="">Choose a tag...</option>
-                    <option value="1">Apple</option>
-                    <option value="2">Banana</option>
-                    <option value="3">Orange</option>
+                <select asp-for="Tags" asp-items="tags" class="form-control" id="project-tags" multiple="multiple" data-allow-clear="true" data-allow-new="true">
+                    <option disabled hidden value="">Choose tags...</option>
                 </select>
                 <span asp-validation-for="Tags" class="text-danger"></span>
-            </div> *@
+            </div>
 
             <div class="form-group mt-2">
                 <input type="submit" value="Create" class="btn btn-primary" />
@@ -59,6 +56,6 @@
 @section scripts
 {
     <script>
-        // Tags.init('#project-tags');
+        Tags.init('#project-tags');
     </script>
 }

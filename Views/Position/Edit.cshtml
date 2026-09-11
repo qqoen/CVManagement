@@ -1,11 +1,11 @@
-@model CVManagement.Models.Position
+@model CVManagement.Controllers.PositionViewModel;
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Position";
+    var tags = ViewData["TagList"] as IEnumerable<SelectListItem>;
 }
 
-<h1>Edit Position</h1>
-
+<h1>@ViewData["Title"]</h1>
 <hr />
 
 <div class="row">
@@ -31,6 +31,14 @@
                 <span asp-validation-for="MaxProjects" class="text-danger"></span>
             </div>
 
+            <div class="form-group">
+                <label asp-for="Tags" class="control-label"></label>
+                <select asp-for="Tags" asp-items="tags" class="form-control" id="project-tags" multiple="multiple" data-allow-clear="true" data-allow-new="true">
+                    <option disabled hidden value="">Choose tags...</option>
+                </select>
+                <span asp-validation-for="Tags" class="text-danger"></span>
+            </div>
+
             <div class="form-group mt-2">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
@@ -44,4 +52,8 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        Tags.init('#project-tags');
+    </script>
 }

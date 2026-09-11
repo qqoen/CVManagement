@@ -18,6 +18,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<Category> Categories { get; set; } = default!;
 
+    public DbSet<Tag> Tags { get; set; } = default!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -63,5 +65,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasForeignKey(e => e.CategoryID)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Tag>()
+            .HasMany(e => e.Positions)
+            .WithMany(e => e.Tags);
     }
 }

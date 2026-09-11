@@ -10,9 +10,7 @@ public class Position
 
     public string Description { get; set; } = string.Empty;
 
-    //public int AccessRules { get; set; }
-
-    //public List<Tag> ProjectTags { get; set; } = [];
+    public ICollection<Tag> Tags { get; } = new List<Tag>();
 
     [Range(0, 10)]
     public int MaxProjects { get; set; }

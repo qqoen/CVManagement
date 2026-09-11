@@ -31,7 +31,7 @@ public static class DbSeeder
                     new() { ID = 3, Name = "Personal Information" },
                     new() { ID = 4, Name = "Soft Skill" }
                 };
-                await context.Categories.AddRangeAsync(categories);
+                await context.AddRangeAsync(categories);
             }
 
             if (!context.CVAttributes.Any())
@@ -42,7 +42,17 @@ public static class DbSeeder
                     new() { Name = "Last Name", Description = "Last Name", CategoryID = 3, DataType = CVAttributeDataType.String, IsMandatory = true },
                     new() { Name = "Location", Description = "Location", CategoryID = 3, DataType = CVAttributeDataType.String, IsMandatory = true },
                 };
-                await context.CVAttributes.AddRangeAsync(cvAttributes);
+                await context.AddRangeAsync(cvAttributes);
+            }
+
+            if (!context.Tags.Any())
+            {
+                var tags = new Tag[]
+                {
+                    new() { Name = "C#" },
+                    new() { Name = "ASP.NET" },
+                };
+                await context.AddRangeAsync(tags);
             }
 
             await context.SaveChangesAsync();

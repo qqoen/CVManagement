@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Edit Position";
     var tags = ViewData["TagList"] as IEnumerable<SelectListItem>;
+    var attributes = ViewData["AttributesList"] as IEnumerable<SelectListItem>;
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -32,6 +33,14 @@
             </div>
 
             <div class="form-group">
+                <label asp-for="Attributes" class="control-label">Attributes</label>
+                <select asp-for="Attributes" asp-items="attributes" class="form-control" id="attributes" multiple="multiple" data-allow-clear="true" data-allow-new="false">
+                    <option disabled hidden value="">Choose attributes...</option>
+                </select>
+                <span asp-validation-for="Attributes" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
                 <label asp-for="Tags" class="control-label"></label>
                 <select asp-for="Tags" asp-items="tags" class="form-control" id="project-tags" multiple="multiple" data-allow-clear="true" data-allow-new="true">
                     <option disabled hidden value="">Choose tags...</option>
@@ -54,6 +63,7 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script>
+        Tags.init('#attributes');
         Tags.init('#project-tags');
     </script>
 }

@@ -98,12 +98,7 @@ public class PositionController : ApplicationController
                 LastUpdated = DateTimeOffset.Now,
             };
             p.Tags.AddRange(await GetTrackableTags(context, position.Tags));
-
-            var attributes = await context.CVAttributes
-                .Where(a => position.Attributes.Contains(a.ID.ToString()))
-                .ToListAsync();
-
-            p.CVAttributes.AddRange(attributes);
+            p.CVAttributes.AddRange(await GetAttributes(position));
             context.Add(p);
 
             try
@@ -118,6 +113,13 @@ public class PositionController : ApplicationController
         }
 
         return View(position);
+    }
+
+    private async Task<List<CVAttribute>> GetAttributes(PositionViewModel positionVm)
+    {
+        return await context.CVAttributes
+            .Where(a => positionVm.Attributes.Contains(a.ID.ToString()))
+            .ToListAsync();
     }
 
     [HttpPost]
@@ -136,9 +138,11 @@ public class PositionController : ApplicationController
     {
         var position = await context.Positions
             .Include(p => p.Tags)
+            .Include(p => p.CVAttributes)
             .FirstOrDefaultAsync(s => s.ID == id);
         if (position == null) return NotFound();
         await PrepareTags(context, position.Tags.Select(t => t.ID.ToString()).ToList());
+        await PrepareAttributes(position.CVAttributes.Select(a => a.ID.ToString()).ToList());
         return View(PositionViewModel.Create(position));
     }
 
@@ -152,6 +156,7 @@ public class PositionController : ApplicationController
             {
                 var position = await context.Positions
                     .Include(p => p.Tags)
+                    .Include(p => p.CVAttributes)
                     .FirstOrDefaultAsync(s => s.ID == id);
 
                 position.Title = positionViewModel.Title;
@@ -160,6 +165,8 @@ public class PositionController : ApplicationController
                 position.LastUpdated = DateTimeOffset.Now;
                 position.Tags.Clear();
                 position.Tags.AddRange(await GetTrackableTags(context, positionViewModel.Tags));
+                position.CVAttributes.Clear();
+                position.CVAttributes.AddRange(await GetAttributes(positionViewModel));
 
                 context.Update(position);
                 await context.SaveChangesAsync();

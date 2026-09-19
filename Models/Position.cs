@@ -10,6 +10,8 @@ public class Position
 
     public string Description { get; set; } = string.Empty;
 
+    public ICollection<CVAttribute> CVAttributes { get; } = new List<CVAttribute>();
+
     public ICollection<Tag> Tags { get; } = new List<Tag>();
 
     [Range(0, 10)]
@@ -18,5 +20,5 @@ public class Position
     [DisplayFormat(DataFormatString = "{0:MMM-dd HH:mm}")]
     public DateTimeOffset LastUpdated { get; set; }
 
-    public ICollection<CV> CVs { get; set; } = new List<CV>();
+    public ICollection<CV> CVs { get; } = new List<CV>();
 }

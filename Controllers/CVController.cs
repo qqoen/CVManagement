@@ -22,16 +22,6 @@ public class CVController : ApplicationController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
-    {
-        var userId = userManager.GetUserId(User);
-        var cvs = await context.CV
-            .Where(cv => cv.UserId == userId)
-            .ToListAsync();
-        return View(cvs);
-    }
-
-    [HttpGet]
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -47,7 +37,7 @@ public class CVController : ApplicationController
         {
             context.Add(cv);
             await context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new { id = cv.ID });
         }
         return View(cv);
     }
@@ -98,7 +88,7 @@ public class CVController : ApplicationController
                     throw;
                 }
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new { id = cv.ID });
         }
         return View(cv);
     }

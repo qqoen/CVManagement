@@ -1,0 +1,62 @@
+﻿@page
+@model CVManagement.Areas.Identity.Pages.Account.Manage.CVModel
+@{
+    ViewData["Title"] = "My CVs";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+@if (Model.CV.Count > 0)
+{
+    <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-danger" id="delete-btn">Delete</button>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    <input type="checkbox" id="select-all" />
+                </th>
+                <th>ID</th>
+                <th>
+                    Position
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.CV)
+            {
+                <tr>
+                    <td><input type="checkbox" class="cv-checkbox" value="@item.ID" /></td>
+                    <td>@item.ID</td>
+                    <td>
+                        @item.Position!.Title
+                    </td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.ID">Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-center">You haven't submitted any CVs yet.</p>
+}
+
+@section scripts
+{
+    <script>
+        const tableSelector = new TableSelector('.cv-checkbox', '#select-all');
+
+        $('#delete-btn').click(() => {
+            $.post('/CV/Delete', JSON.stringify([...tableSelector.selectedIds])).then(() => {
+                location.reload();
+            });
+        });
+    </script>
+}

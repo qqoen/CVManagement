@@ -2,14 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
+using CVManagement.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using CVManagement.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CVManagement.Areas.Identity.Pages.Account.Manage;
 
@@ -17,60 +14,65 @@ public class IndexModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly ApplicationDbContext context;
 
     public IndexModel(
         UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+        SignInManager<ApplicationUser> signInManager,
+        ApplicationDbContext context)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        this.context = context;
     }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     public string? Username { get; set; }
+    public List<CVAttributeViewModel> MandatoryAttributes { get; set; } = [];
+    public List<CVAttributeViewModel> OtherAttributes { get; set; } = [];
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     [TempData]
     public string? StatusMessage { get; set; }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     [BindProperty]
     public InputModel Input { get; set; } = default!;
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     public class InputModel
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [Phone]
-        [Display(Name = "Phone number")]
-        public string? PhoneNumber { get; set; }
+
+    }
+
+    public class CVAttributeViewModel
+    {
+        public int ID { get; set; }
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public bool IsMandatory { get; set; }
     }
 
     private async Task LoadAsync(ApplicationUser user)
     {
         var userName = await _userManager.GetUserNameAsync(user);
-        var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+        var attributes = await context.CVAttributes
+            .Where(a => a.Users.Contains(user))
+            .ToListAsync();
+        var attributeValues = await context.CVAttributeValues
+            .Where(v => v.UserId == user.Id)
+            .ToListAsync();
 
+        var attributeVms = attributes.Select(a => new CVAttributeViewModel()
+        {
+            ID = a.ID,
+            Name = a.Name,
+            Value = attributeValues.Where(v => v.CVAttributeID == a.ID).Select(v => v.Value).FirstOrDefault() ?? string.Empty,
+            IsMandatory = a.IsMandatory,
+        });
         Username = userName;
+        MandatoryAttributes = attributeVms.Where(a => a.IsMandatory).ToList();
+        OtherAttributes = attributeVms.Where(a => !a.IsMandatory).ToList();
 
         Input = new InputModel
         {
-            PhoneNumber = phoneNumber
+
         };
     }
 
@@ -101,15 +103,15 @@ public class IndexModel : PageModel
         }
 
         var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-        if (Input.PhoneNumber != phoneNumber)
-        {
-            var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-            if (!setPhoneResult.Succeeded)
-            {
-                StatusMessage = "Unexpected error when trying to set phone number.";
-                return RedirectToPage();
-            }
-        }
+        //if (Input.PhoneNumber != phoneNumber)
+        //{
+        //    var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+        //    if (!setPhoneResult.Succeeded)
+        //    {
+        //        StatusMessage = "Unexpected error when trying to set phone number.";
+        //        return RedirectToPage();
+        //    }
+        //}
 
         await _signInManager.RefreshSignInAsync(user);
         StatusMessage = "Your profile has been updated";

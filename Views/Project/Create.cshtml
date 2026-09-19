@@ -1,11 +1,14 @@
-@model CVManagement.Models.Project
+@model CVManagement.Controllers.ProjectViewModel
 
 @{
     ViewData["Title"] = "Create";
+    var tags = ViewData["TagList"] as IEnumerable<SelectListItem>;
 }
 
-<h1>Create Project</h1>
-
+<div>
+    <h1>Create Project</h1>
+    <a asp-area="Identity" asp-page="/Account/Manage/Projects">Back to List</a>
+</div>
 <hr />
 
 <div class="row">
@@ -26,16 +29,25 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="StartDate" class="control-label"></label>
+                <label asp-for="StartDate" class="control-label">Start Date</label>
                 <input type="date" asp-for="StartDate" class="form-control" />
                 <span asp-validation-for="StartDate" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="EndDate" class="control-label"></label>
+                <label asp-for="EndDate" class="control-label">End Date</label>
                 <input type="date" asp-for="EndDate" class="form-control" />
                 <span asp-validation-for="EndDate" class="text-danger"></span>
             </div>
+
+            <div class="form-group">
+                <label asp-for="Tags" class="control-label">Project Tags</label>
+                <select asp-for="Tags" asp-items="tags" class="form-control" id="project-tags" multiple="multiple" data-allow-clear="true" data-allow-new="true">
+                    <option disabled hidden value="">Choose tags...</option>
+                </select>
+                <span asp-validation-for="Tags" class="text-danger"></span>
+            </div>
+
             <div class="form-group mt-2">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
@@ -43,13 +55,10 @@
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section scripts
 {
     <script>
         initMarkdown('#editor');
+        Tags.init('#project-tags');
     </script>
 }

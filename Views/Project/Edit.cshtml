@@ -1,14 +1,14 @@
-@model CVManagement.Models.Project
+@model CVManagement.Controllers.ProjectViewModel;
 
 @{
     ViewData["Title"] = "Edit";
+    var tags = ViewData["TagList"] as IEnumerable<SelectListItem>;
 }
 
 <div>
     <h1>Edit Project</h1>
-    <a asp-action="Details" asp-route-id="@Model.ID">Back to Project</a>
+    <a asp-action="Details" asp-controller="Project""" asp-route-id="@Model.ID">Back to Project</a>
 </div>
-
 <hr />
 
 <div class="row">
@@ -38,8 +38,15 @@
                 <span asp-validation-for="EndDate" class="text-danger"></span>
             </div>
 
-            <hr />
+            <div class="form-group">
+                <label asp-for="Tags" class="control-label"></label>
+                <select asp-for="Tags" asp-items="tags" class="form-control" id="project-tags" multiple="multiple" data-allow-clear="true" data-allow-new="true">
+                    <option disabled hidden value="">Choose tags...</option>
+                </select>
+                <span asp-validation-for="Tags" class="text-danger"></span>
+            </div>
 
+            <hr />
             <div class="form-group mt-2">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
@@ -52,5 +59,6 @@
 
     <script>
         initMarkdown('#editor');
+        Tags.init('#project-tags');
     </script>
 }

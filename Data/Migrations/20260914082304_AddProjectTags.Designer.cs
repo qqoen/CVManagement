@@ -3,6 +3,7 @@ using System;
 using CVManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CVManagement.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260914082304_AddProjectTags")]
+    partial class AddProjectTags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,36 +24,6 @@ namespace CVManagement.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("ApplicationUserCVAttribute", b =>
-                {
-                    b.Property<int>("CVAttributesID")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UsersId")
-                        .HasColumnType("text");
-
-                    b.HasKey("CVAttributesID", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("ApplicationUserCVAttribute");
-                });
-
-            modelBuilder.Entity("CVAttributePosition", b =>
-                {
-                    b.Property<int>("CVAttributesID")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PositionsID")
-                        .HasColumnType("integer");
-
-                    b.HasKey("CVAttributesID", "PositionsID");
-
-                    b.HasIndex("PositionsID");
-
-                    b.ToTable("CVAttributePosition");
-                });
 
             modelBuilder.Entity("CVManagement.Data.ApplicationUser", b =>
                 {
@@ -464,36 +437,6 @@ namespace CVManagement.Migrations
                     b.HasIndex("TagsID");
 
                     b.ToTable("ProjectTag");
-                });
-
-            modelBuilder.Entity("ApplicationUserCVAttribute", b =>
-                {
-                    b.HasOne("CVManagement.Models.CVAttribute", null)
-                        .WithMany()
-                        .HasForeignKey("CVAttributesID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CVManagement.Data.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CVAttributePosition", b =>
-                {
-                    b.HasOne("CVManagement.Models.CVAttribute", null)
-                        .WithMany()
-                        .HasForeignKey("CVAttributesID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CVManagement.Models.Position", null)
-                        .WithMany()
-                        .HasForeignKey("PositionsID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("CVManagement.Models.CV", b =>

@@ -6,4 +6,10 @@
             location.reload();
         });
     });
+
+    $('#add-btn').click(() => {
+        $.post('/CVAttribute/AddToUser', JSON.stringify([...tableSelector.selectedIds])).then(() => {
+            location.reload();
+        });
+    });
 });

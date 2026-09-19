@@ -5,26 +5,53 @@
     ViewData["ActivePage"] = ManageNavPages.Index;
 }
 
-<h3>@ViewData["Title"]</h3>
-<partial name="_StatusMessage" for="StatusMessage" />
-<div class="row">
+@* <partial name="_StatusMessage" for="StatusMessage" /> *@
+
+@* <div class="row">
     <div class="col-md-6">
         <form id="profile-form" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Username" class="form-control" placeholder="Please choose your username." disabled />
-                <label asp-for="Username" class="form-label"></label>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
-                <label asp-for="Input.PhoneNumber" class="form-label"></label>
-                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
-            </div>
+            
             <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </form>
     </div>
-</div>
+</div> *@
 
-@section Scripts {
+<h3>Me</h3>
+<hr />
+
+@foreach (var attr in Model.MandatoryAttributes)
+{
+    <dl class="row">
+        <dt>
+            @attr.Name (<a asp-controller="CVAttribute" asp-action="FillValue" asp-route-id="@attr.ID">Edit</a>)
+        </dt>
+        <dd>
+            @attr.Value
+        </dd>
+    </dl>
+}
+
+<h3>Info</h3>
+<hr />
+
+@foreach (var attr in Model.OtherAttributes)
+{
+    <dl class="row">
+        <dt>
+            @attr.Name (<a asp-controller="CVAttribute" asp-action="FillValue" asp-route-id="@attr.ID">Edit</a>)
+        </dt>
+        <dd>
+            @attr.Value
+        </dd>
+    </dl>
+}
+@if (Model.OtherAttributes.Count == 0)
+{
+    <p>Add more <a asp-controller="CVAttribute" asp-action="Index">attributes</a> to be displayed here.</p>
+}
+
+@section Scripts
+{
     <partial name="_ValidationScriptsPartial" />
 }

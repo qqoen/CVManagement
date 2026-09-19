@@ -21,12 +21,19 @@
     </div>
     <hr />
 }
+@if (isSignedIn && isCandidate)
+{
+    <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-primary" id="add-btn">Add to my library</button>
+    </div>
+    <hr />
+}
 
 <table class="table table-striped">
     <thead>
         <tr>
             <th>
-                @if (isSignedIn && isRecruiter)
+                @if (isSignedIn)
                 {
                     <input type="checkbox" id="select-all" />            
                 }
@@ -43,7 +50,7 @@
         {
             <tr>
                 <td>
-                    @if (isSignedIn && isRecruiter && !cvattribute.IsMandatory)
+                    @if (isSignedIn && !cvattribute.IsMandatory)
                     {
                         <input type="checkbox" class="attribute-checkbox" value="@cvattribute.ID" />                
                     }
@@ -52,10 +59,6 @@
                     @if (isSignedIn && isRecruiter)
                     {
                         <a asp-action="Edit" asp-route-id="@cvattribute.ID">@cvattribute.Name</a>
-                    }
-                    else if (isSignedIn && isCandidate)
-                    {
-                        <a asp-action="FillValue" asp-route-id="@cvattribute.ID">@cvattribute.Name</a>
                     }
                     else
                     {

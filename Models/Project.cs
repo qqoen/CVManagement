@@ -25,4 +25,6 @@ public class Project
     public string? UserId { get; set; }
 
     public ApplicationUser? User { get; set; }
+
+    public ICollection<Tag> Tags { get; } = new List<Tag>();
 }

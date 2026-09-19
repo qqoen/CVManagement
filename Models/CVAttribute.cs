@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CVManagement.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CVManagement.Models;
 
@@ -19,5 +20,9 @@ public class CVAttribute
 
     public CVAttributeDataType DataType { get; set; }
 
-    public ICollection<CVAttributeValue> CVAttributeValues { get; set; } = new List<CVAttributeValue>();
+    public ICollection<CVAttributeValue> CVAttributeValues { get; } = new List<CVAttributeValue>();
+
+    public ICollection<ApplicationUser> Users { get; } = new List<ApplicationUser>();
+
+    public ICollection<Position> Positions { get; } = new List<Position>();
 }

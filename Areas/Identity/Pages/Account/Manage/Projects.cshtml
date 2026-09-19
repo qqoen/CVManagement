@@ -1,5 +1,5 @@
-@model List<CVManagement.Models.Project>
-
+﻿@page
+@model CVManagement.Areas.Identity.Pages.Account.Manage.ProjectsModel
 @{
     ViewData["Title"] = "My Projects";
 }
@@ -9,7 +9,7 @@
 
 <div class="d-flex gap-2 mb-3">
     <button class="btn btn-danger" id="delete-btn">Delete</button>
-    <a class="btn btn-primary" asp-action="Create">Create New</a>
+    <a class="btn btn-primary" asp-action="Create" asp-controller="Project">Create New</a>
 </div>
 <hr />
 
@@ -22,11 +22,11 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.Projects)
         {
             <tr>
                 <td><input type="checkbox" class="project-checkbox" value="@item.ID" /></td>
-                <td><a asp-action="Details" asp-route-id="@item.ID">@Html.DisplayFor(model => item.Name)</a></td>
+                <td><a asp-action="Details" asp-controller="Project" asp-route-id="@item.ID">@Html.DisplayFor(model => item.Name)</a></td>
                 <td>
                     @Html.DisplayFor(model => item.StartDate) - @Html.DisplayFor(model => item.EndDate)
                 </td>
@@ -35,13 +35,13 @@
     </tbody>
 </table>
 
-@if (Model.Count == 0)
+@if (Model.Projects.Count == 0)
 {
     <p class="text-center">List is empty.</p>
 }
 else
 {
-    <p class="text-end"><b>Total: @Model.Count</b></p>
+    <p class="text-end"><b>Total: @Model.Projects.Count</b></p>
 }
 
 @section scripts

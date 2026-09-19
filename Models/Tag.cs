@@ -10,4 +10,6 @@ public class Tag
     public string Name { get; set; } = string.Empty;
 
     public ICollection<Position> Positions { get; } = new List<Position>();
+
+    public ICollection<Project> Projects { get; } = new List<Project>();
 }

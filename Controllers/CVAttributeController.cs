@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Packaging;
 
 namespace CVManagement.Controllers;
 
@@ -148,6 +149,23 @@ public class CVAttributeController : ApplicationController
         return Ok();
     }
 
+    [HttpPost]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
+    public async Task<IActionResult> AddToUser([FromBody] List<int> selectedIds)
+    {
+        var userId = userManager.GetUserId(User);
+        var user = await context.Users
+                .Include(u => u.CVAttributes)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+        var userAttributeIds = user.CVAttributes.Select(a => a.ID).ToList();
+        var attributes = context.CVAttributes
+            .Where(a => !a.IsMandatory && selectedIds.Contains(a.ID) && !userAttributeIds.Contains(a.ID));
+        user.CVAttributes.AddRange(attributes);
+        context.Update(user);
+        await context.SaveChangesAsync();
+        return Ok();
+    }
+
     [HttpGet]
     [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Edit(int id)
@@ -222,6 +240,6 @@ public class CVAttributeController : ApplicationController
         }
 
         await context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        return RedirectToPage("/Account/Manage/Index", new { area = "Identity" });
     }
 }

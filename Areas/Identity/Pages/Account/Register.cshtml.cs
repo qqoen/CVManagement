@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
+using NuGet.Packaging;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -29,13 +31,15 @@ public class RegisterModel : PageModel
     private readonly IUserEmailStore<ApplicationUser> _emailStore;
     private readonly ILogger<RegisterModel> _logger;
     private readonly IEmailSender _emailSender;
+    private readonly ApplicationDbContext context;
 
     public RegisterModel(
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
         SignInManager<ApplicationUser> signInManager,
         ILogger<RegisterModel> logger,
-        IEmailSender emailSender)
+        IEmailSender emailSender,
+        ApplicationDbContext context)
     {
         _userManager = userManager;
         _userStore = userStore;
@@ -43,6 +47,7 @@ public class RegisterModel : PageModel
         _signInManager = signInManager;
         _logger = logger;
         _emailSender = emailSender;
+        this.context = context;
     }
 
     public class InputModel
@@ -93,6 +98,8 @@ public class RegisterModel : PageModel
                 var roleResult = await _userManager.AddToRoleAsync(user, Input.Role);
                 DisplayIdentityErrors(roleResult);
 
+                await AddMandatoryAttributes(user);
+
                 var userId = await _userManager.GetUserIdAsync(user);
                 var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -119,6 +126,14 @@ public class RegisterModel : PageModel
         }
 
         return Page();
+    }
+
+    private async Task AddMandatoryAttributes(ApplicationUser user)
+    {
+        var attributes = await context.CVAttributes.Where(a => a.IsMandatory).ToListAsync();
+        user.CVAttributes.AddRange(attributes);
+        context.Update(user);
+        await context.SaveChangesAsync();
     }
 
     private void DisplayIdentityErrors(IdentityResult result)

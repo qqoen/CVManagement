@@ -14,6 +14,7 @@ public class PositionViewModel
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public List<string> Tags { get; set; } = new List<string>();
+    public List<string> Attributes { get; set; } = new List<string>();
     public int MaxProjects { get; set; }
 
     public static PositionViewModel Create(Position position)
@@ -25,6 +26,7 @@ public class PositionViewModel
             Description = position.Description,
             MaxProjects = position.MaxProjects,
             Tags = position.Tags.Select(t => t.ID.ToString()).ToList(),
+            Attributes = position.CVAttributes.Select(a => a.ID.ToString()).ToList(),
         };
     }
 }
@@ -53,9 +55,11 @@ public class PositionController : ApplicationController
         if (id == null) return NotFound();
         var position = await context.Positions
             .Include(p => p.Tags)
+            .Include(p => p.CVAttributes)
             .FirstOrDefaultAsync(m => m.ID == id);
         if (position == null) return NotFound();
         ViewData["TagList"] = string.Join(", ", position.Tags.Select(t => t.Name));
+        ViewData["AttributeList"] = string.Join(", ", position.CVAttributes.Select(t => t.Name));
         return View(PositionViewModel.Create(position));
     }
 
@@ -63,17 +67,20 @@ public class PositionController : ApplicationController
     [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Create()
     {
-        await PrepareTags();
+        await PrepareTags(context, new List<string>());
+        await PrepareAttributes(new List<string>());
         return View(new PositionViewModel());
     }
 
-    private async Task PrepareTags()
+    protected async Task PrepareAttributes(List<string> selected)
     {
-        var tags = await context.Tags.ToListAsync();
+        var attributes = await context.CVAttributes
+            .Where(a => !a.IsMandatory)
+            .ToListAsync();
         var selectList = new List<SelectListItem>();
-        foreach (var tag in tags)
-            selectList.Add(new SelectListItem(tag.Name, tag.ID.ToString()));
-        ViewData["TagList"] = selectList;
+        foreach (var attr in attributes)
+            selectList.Add(new SelectListItem(attr.Name, attr.ID.ToString(), selected.Contains(attr.ID.ToString())));
+        ViewData["AttributesList"] = selectList;
     }
 
     [HttpPost]
@@ -82,18 +89,25 @@ public class PositionController : ApplicationController
     {
         if (ModelState.IsValid)
         {
+            var p = new Position()
+            {
+                ID = position.ID,
+                Title = position.Title,
+                Description = position.Description,
+                MaxProjects = position.MaxProjects,
+                LastUpdated = DateTimeOffset.Now,
+            };
+            p.Tags.AddRange(await GetTrackableTags(context, position.Tags));
+
+            var attributes = await context.CVAttributes
+                .Where(a => position.Attributes.Contains(a.ID.ToString()))
+                .ToListAsync();
+
+            p.CVAttributes.AddRange(attributes);
+            context.Add(p);
+
             try
             {
-                var p = new Position()
-                {
-                    ID = position.ID,
-                    Title = position.Title,
-                    Description = position.Description,
-                    MaxProjects = position.MaxProjects,
-                    LastUpdated = DateTimeOffset.Now,
-                };
-                p.Tags.AddRange(await GetTrackableTags(position.Tags));
-                context.Add(p);
                 await context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
@@ -104,26 +118,6 @@ public class PositionController : ApplicationController
         }
 
         return View(position);
-    }
-
-    private async Task<List<Tag>> GetTrackableTags(List<string> viewModelTags)
-    {
-        var existingTags = await context.Tags
-            .Where(t => viewModelTags.Contains(t.ID.ToString()))
-            .ToListAsync();
-
-        var newTags = new List<string>(viewModelTags);
-
-        foreach (var tag in existingTags)
-            newTags.Remove(tag.ID.ToString());
-
-        var newTagEntities = newTags.Select(t => new Tag() { Name = t }).ToList();
-
-        context.AddRange(newTagEntities);
-
-        existingTags.AddRange(newTagEntities);
-
-        return existingTags;
     }
 
     [HttpPost]
@@ -144,7 +138,7 @@ public class PositionController : ApplicationController
             .Include(p => p.Tags)
             .FirstOrDefaultAsync(s => s.ID == id);
         if (position == null) return NotFound();
-        await PrepareTags();
+        await PrepareTags(context, position.Tags.Select(t => t.ID.ToString()).ToList());
         return View(PositionViewModel.Create(position));
     }
 
@@ -165,7 +159,7 @@ public class PositionController : ApplicationController
                 position.MaxProjects = positionViewModel.MaxProjects;
                 position.LastUpdated = DateTimeOffset.Now;
                 position.Tags.Clear();
-                position.Tags.AddRange(await GetTrackableTags(positionViewModel.Tags));
+                position.Tags.AddRange(await GetTrackableTags(context, positionViewModel.Tags));
 
                 context.Update(position);
                 await context.SaveChangesAsync();

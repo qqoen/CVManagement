@@ -45,12 +45,20 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<ApplicationUser>()
+            .HasMany(e => e.CVAttributes)
+            .WithMany(e => e.Users);
+
         modelBuilder.Entity<Position>()
             .HasMany(e => e.CVs)
             .WithOne(e => e.Position)
             .HasForeignKey(e => e.PositionID)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Position>()
+            .HasMany(e => e.CVAttributes)
+            .WithMany(e => e.Positions);
 
         modelBuilder.Entity<CVAttribute>()
             .HasMany(e => e.CVAttributeValues)
@@ -68,6 +76,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         modelBuilder.Entity<Tag>()
             .HasMany(e => e.Positions)
+            .WithMany(e => e.Tags);
+
+        modelBuilder.Entity<Tag>()
+            .HasMany(e => e.Projects)
             .WithMany(e => e.Tags);
     }
 }

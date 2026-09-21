@@ -15,4 +15,6 @@ public class CVAttributeValue
     public string? UserId { get; set; }
 
     public ApplicationUser? User { get; set; }
+
+    public ICollection<CV> CVs { get; } = new List<CV>();
 }

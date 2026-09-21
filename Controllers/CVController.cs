@@ -31,18 +31,30 @@ public class CVController : ApplicationController
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CV cv)
+    [Authorize(Roles = DbSeeder.CandidateRole)]
+    public async Task<IActionResult> Create(int? positionId)
     {
-        if (ModelState.IsValid)
+        if (positionId == null) return NotFound();
+        var position = await context.Positions.FindAsync(positionId);
+        if (position == null) return NotFound();
+        var user = await userManager.GetUserAsync(User);
+        var existingCV = await context.CV.FirstOrDefaultAsync(cv => cv.UserId == user.Id && cv.PositionID == position.ID);
+        if (existingCV != null) return NotFound();
+
+        var cv = new CV()
         {
-            context.Add(cv);
-            await context.SaveChangesAsync();
-            return RedirectToAction(nameof(Details), new { id = cv.ID });
-        }
-        return View(cv);
+            PositionID = position.ID,
+            Position = position,
+            UserId = user.Id,
+            User = user,
+        };
+
+        context.Add(cv);
+        await context.SaveChangesAsync();
+        return RedirectToAction(nameof(Details), new { id = cv.ID });
     }
 
-    // GET: CVS/Edit/5
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -58,11 +70,8 @@ public class CVController : ApplicationController
         return View(cv);
     }
 
-    // POST: CVS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
-    [ValidateAntiForgeryToken]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Edit(int? id, [Bind("ID,PositionID,Position,UserId,User")] CV cv)
     {
         if (id != cv.ID)
@@ -99,6 +108,7 @@ public class CVController : ApplicationController
     }
 
     [HttpPost]
+    [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
         var cvs = context.CV.Where(cv => selectedIds.Contains(cv.ID));

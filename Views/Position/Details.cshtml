@@ -69,7 +69,7 @@
     }
     @if (isSignedIn && isCandidate)
     {
-        <a class="btn btn-primary" asp-controller="CVController" asp-action="Create">Submit CV</a>
+        <a class="btn btn-primary" asp-controller="CVController" asp-action="Create" asp-route-id="@Model?.ID">Submit CV</a>
     }
     <br />
     <a asp-action="Index">Back to All Positions</a>

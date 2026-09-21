@@ -81,5 +81,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<Tag>()
             .HasMany(e => e.Projects)
             .WithMany(e => e.Tags);
+
+        modelBuilder.Entity<CV>()
+            .HasMany(e => e.CVAttributeValues)
+            .WithMany(e => e.CVs);
     }
 }

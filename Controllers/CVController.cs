@@ -36,54 +36,24 @@ public class CVController : ApplicationController
     [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Edit(int? id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
+        if (id == null) return NotFound();
         var cv = await context.CV.FindAsync(id);
-        if (cv == null)
-        {
-            return NotFound();
-        }
+        if (cv == null) return NotFound();
         return View(cv);
     }
 
     [HttpPost]
     [Authorize(Roles = DbSeeder.CandidateRole)]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,PositionID,Position,UserId,User")] CV cv)
+    public async Task<IActionResult> Edit(int? id, CV cv)
     {
-        if (id != cv.ID)
-        {
-            return NotFound();
-        }
-
+        if (id != cv.ID) return NotFound();
         if (ModelState.IsValid)
         {
-            try
-            {
-                context.Update(cv);
-                await context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CVExists(cv.ID))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            context.Update(cv);
+            await context.SaveChangesAsync();
             return RedirectToAction(nameof(Details), new { id = cv.ID });
         }
         return View(cv);
-    }
-
-    private bool CVExists(int? id)
-    {
-        return context.CV.Any(e => e.ID == id);
     }
 
     [HttpPost]

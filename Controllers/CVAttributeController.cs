@@ -1,5 +1,6 @@
 ﻿using CVManagement.Data;
 using CVManagement.Models;
+using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,75 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
 
 namespace CVManagement.Controllers;
-
-public class FillValueViewModel
-{
-    public int ValueID { get; set; }
-
-    public string Name { get; set; }
-
-    public string Description { get; set; }
-
-    public string CategoryName { get; set; } = string.Empty;
-
-    public CVAttributeDataType DataType { get; set; }
-
-    public string Value1 { get; set; } = string.Empty;
-
-    public string Value2 { get; set; } = string.Empty;
-
-    public bool BoolValue { get; set; }
-
-    public static FillValueViewModel Create(CVAttribute attribute, CVAttributeValue? attributeValue)
-    {
-        var (value1, value2, boolVal) = ParseValues(attribute.DataType, attributeValue?.Value ?? string.Empty);
-
-        return new FillValueViewModel()
-        {
-            ValueID = attributeValue?.ID ?? default,
-            Name = attribute.Name,
-            Description = attribute.Description,
-            CategoryName = attribute.Category!.Name,
-            DataType = attribute.DataType,
-            Value1 = value1,
-            Value2 = value2,
-            BoolValue = boolVal,
-        };
-    }
-
-    private static (string, string, bool) ParseValues(CVAttributeDataType dataType, string value)
-    {
-        if (value != string.Empty && dataType == CVAttributeDataType.Period)
-        {
-            var parts = value.Split(',');
-
-            if (parts.Length > 1)
-                return (parts[0], parts[1], false);
-            else
-                return (parts[0], string.Empty, false);
-        }
-        else if (dataType == CVAttributeDataType.Boolean)
-        {
-            var boolVal = value == string.Empty ? false : bool.Parse(value);
-            return (string.Empty, string.Empty, boolVal);
-        }
-        else
-        {
-            return (value, string.Empty, false);
-        }
-    }
-
-    public string SerializeValue()
-    {
-        if (DataType == CVAttributeDataType.Period)
-            return Value1 + "," + Value2;
-
-        if (DataType == CVAttributeDataType.Boolean)
-            return BoolValue.ToString();
-
-        return Value1;
-    }
-}
 
 [Authorize]
 public class CVAttributeController : ApplicationController
@@ -109,33 +41,23 @@ public class CVAttributeController : ApplicationController
         return View();
     }
 
-    private async Task PrepareCategories()
-    {
-        var categories = await context.Categories.ToListAsync();
-        var selectList = new List<SelectListItem>();
-        foreach (var category in categories)
-            selectList.Add(new SelectListItem(category.Name, category.ID.ToString()));
-        ViewData["Categories"] = selectList;
-    }
-
     [HttpPost]
     [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Create(CVAttribute attribute)
     {
-        try
+        if (ModelState.IsValid)
         {
-            if (ModelState.IsValid)
+            context.Add(attribute);
+            try
             {
-                context.Add(attribute);
                 await context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            catch (DbUpdateException ex)
+            {
+                HandleDbException(ex, $"Name '{attribute.Name}' already exists.");
+            }
         }
-        catch (DbUpdateException ex)
-        {
-            HandleDbException(ex, $"Name '{attribute.Name}' already exists.");
-        }
-
         return View(attribute);
     }
 
@@ -143,7 +65,8 @@ public class CVAttributeController : ApplicationController
     [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        var attributes = context.CVAttributes.Where(a => !a.IsMandatory && selectedIds.Contains(a.ID));
+        var attributes = context.CVAttributes
+            .Where(a => !a.IsMandatory && selectedIds.Contains(a.ID));
         context.RemoveRange(attributes);
         await context.SaveChangesAsync();
         return Ok();
@@ -155,8 +78,8 @@ public class CVAttributeController : ApplicationController
     {
         var userId = userManager.GetUserId(User);
         var user = await context.Users
-                .Include(u => u.CVAttributes)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+            .Include(u => u.CVAttributes)
+            .FirstOrDefaultAsync(u => u.Id == userId);
         var userAttributeIds = user.CVAttributes.Select(a => a.ID).ToList();
         var attributes = context.CVAttributes
             .Where(a => !a.IsMandatory && selectedIds.Contains(a.ID) && !userAttributeIds.Contains(a.ID));
@@ -170,7 +93,8 @@ public class CVAttributeController : ApplicationController
     [Authorize(Roles = DbSeeder.RecruiterRole)]
     public async Task<IActionResult> Edit(int id)
     {
-        var attribute = await context.CVAttributes.FirstOrDefaultAsync(s => s.ID == id);
+        var attribute = await context.CVAttributes
+            .FirstOrDefaultAsync(s => s.ID == id);
         if (attribute == null) return NotFound();
         await PrepareCategories();
         return View(attribute);
@@ -181,12 +105,11 @@ public class CVAttributeController : ApplicationController
     public async Task<IActionResult> Edit(int id, CVAttribute attribute)
     {
         if (id != attribute.ID) return NotFound();
-
         if (ModelState.IsValid)
         {
+            context.Update(attribute);
             try
             {
-                context.Update(attribute);
                 await context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
@@ -195,7 +118,6 @@ public class CVAttributeController : ApplicationController
                 HandleDbException(ex, $"Name '{attribute.Name}' already exists.");
             }
         }
-
         return View(attribute);
     }
 
@@ -208,7 +130,8 @@ public class CVAttributeController : ApplicationController
             .FirstOrDefaultAsync(s => s.ID == id);
         if (attribute == null) return NotFound();
         var userId = userManager.GetUserId(User);
-        var attributeValue = await context.CVAttributeValues.FirstOrDefaultAsync(v => v.CVAttributeID == id && v.UserId == userId);
+        var attributeValue = await context.CVAttributeValues
+            .FirstOrDefaultAsync(v => v.CVAttributeID == id && v.UserId == userId);
         return View(FillValueViewModel.Create(attribute, attributeValue));
     }
 
@@ -216,30 +139,37 @@ public class CVAttributeController : ApplicationController
     [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> FillValue(int id, FillValueViewModel fillValueViewModel)
     {
-        var attribute = await context.CVAttributes.FirstOrDefaultAsync(s => s.ID == id);
+        var attribute = await context.CVAttributes.FindAsync(id);
         if (attribute == null) return NotFound();
-        var attributeValue = await context.CVAttributeValues.FirstOrDefaultAsync(v => v.ID == fillValueViewModel.ValueID);
-
+        var attributeValue = await context.CVAttributeValues.FindAsync(fillValueViewModel.ValueID);
         if (attributeValue != null)
-        {
-            attributeValue.Value = fillValueViewModel.SerializeValue();
-            context.Update(attributeValue);
-        }
+            await UpdateAttributeValue(attributeValue, fillValueViewModel);
         else
-        {
-            var user = (await userManager.GetUserAsync(User))!;
-            attributeValue = new CVAttributeValue
-            {
-                CVAttribute = attribute,
-                CVAttributeID = attribute.ID,
-                User = user,
-                UserId = user.Id,
-                Value = fillValueViewModel.SerializeValue(),
-            };
-            context.Add(attributeValue);
-        }
-
-        await context.SaveChangesAsync();
+            await CreateAttributeValue(attribute, fillValueViewModel);
         return RedirectToPage("/Account/Manage/Index", new { area = "Identity" });
+    }
+
+    private async Task UpdateAttributeValue(CVAttributeValue attributeValue, FillValueViewModel fillValueViewModel)
+    {
+        attributeValue.Value = fillValueViewModel.SerializeValue();
+        context.Update(attributeValue);
+        await context.SaveChangesAsync();
+    }
+
+    private async Task CreateAttributeValue(CVAttribute attribute, FillValueViewModel fillValueViewModel)
+    {
+        var user = (await userManager.GetUserAsync(User))!;
+        var attributeValue = fillValueViewModel.CreateValueModel(attribute, user);
+        context.Add(attributeValue);
+        await context.SaveChangesAsync();
+    }
+
+    private async Task PrepareCategories()
+    {
+        var categories = await context.Categories.ToListAsync();
+        var selectList = new List<SelectListItem>();
+        foreach (var category in categories)
+            selectList.Add(new SelectListItem(category.Name, category.ID.ToString()));
+        ViewData["Categories"] = selectList;
     }
 }

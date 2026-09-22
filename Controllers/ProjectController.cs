@@ -1,43 +1,13 @@
 using CVManagement.Data;
 using CVManagement.Models;
-using CVManagement.Models.Validation;
+using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
-using System.ComponentModel.DataAnnotations;
 
 namespace CVManagement.Controllers;
-
-public class ProjectViewModel
-{
-    public int ID { get; set; }
-    public string UserId { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    [Display(Name = "Start Date")]
-    [EarlierDate(nameof(EndDate))]
-    public DateTimeOffset StartDate { get; set; }
-    [Display(Name = "End Date")]
-    [PastDate]
-    public DateTimeOffset EndDate { get; set; }
-    public List<string> Tags { get; set; } = [];
-
-    public static ProjectViewModel Create(Project project)
-    {
-        return new ProjectViewModel()
-        {
-            ID = project.ID,
-            UserId = project.UserId,
-            Name = project.Name,
-            Description = project.Description,
-            StartDate = project.StartDate,
-            EndDate = project.EndDate,
-            Tags = project.Tags.Select(t => t.ID.ToString()).ToList(),
-        };
-    }
-}
 
 [Authorize]
 public class ProjectController : ApplicationController
@@ -55,10 +25,7 @@ public class ProjectController : ApplicationController
     [HttpGet]
     public async Task<IActionResult> Details(int? id)
     {
-        if (id == null) return NotFound();
-        var project = await context.Project
-            .Include(p => p.Tags)
-            .FirstOrDefaultAsync(p => p.ID == id);
+        var project = await GetProject(id);
         if (project == null) return NotFound();
         var userId = userManager.GetUserId(User);
         if (project.UserId == userId || User.IsInRole(DbSeeder.RecruiterRole))
@@ -87,20 +54,12 @@ public class ProjectController : ApplicationController
     {
         if (ModelState.IsValid)
         {
-            var project = new Project
-            {
-                Name = vm.Name,
-                Description = vm.Description,
-                StartDate = vm.StartDate,
-                EndDate = vm.EndDate,
-                UserId = userManager.GetUserId(User)
-            };
-            project.Tags.AddRange(await GetTrackableTags(context, vm.Tags));
+            var tags = await GetTrackableTags(context, vm.Tags);
+            var project = vm.CreateProjectModel(userManager.GetUserId(User)!, tags);
             context.Add(project);
             await context.SaveChangesAsync();
             return RedirectToAction(nameof(Details), new { id = project.ID });
         }
-        ModelState.AddModelError(string.Empty, "Invalid model");
         return View(vm);
     }
 
@@ -108,10 +67,7 @@ public class ProjectController : ApplicationController
     [Authorize(Roles = DbSeeder.CandidateRole)]
     public async Task<IActionResult> Edit(int? id)
     {
-        if (id == null) return NotFound();
-        var project = await context.Project
-            .Include(p => p.Tags)
-            .FirstOrDefaultAsync(p => p.ID == id);
+        var project = await GetProject(id);
         if (project == null) return NotFound();
         var userId = userManager.GetUserId(User);
         if (project.UserId != userId) return NotFound();
@@ -129,15 +85,9 @@ public class ProjectController : ApplicationController
         if (project == null || project.UserId != userId) return NotFound();
         if (ModelState.IsValid)
         {
-            project.Name = vm.Name;
-            project.Description = vm.Description;
-            project.StartDate = vm.StartDate;
-            project.EndDate = vm.EndDate;
-            project.Tags.Clear();
-            project.Tags.AddRange(await GetTrackableTags(context, vm.Tags));
-
+            var tags = await GetTrackableTags(context, vm.Tags);
+            vm.UpdateProjectModel(project, tags);
             context.Update(project);
-
             try
             {
                 await context.SaveChangesAsync();
@@ -160,5 +110,13 @@ public class ProjectController : ApplicationController
         context.RemoveRange(projects);
         await context.SaveChangesAsync();
         return Ok();
+    }
+
+    private async Task<Project?> GetProject(int? id)
+    {
+        if (id == null) return null;
+        return await context.Project
+            .Include(p => p.Tags)
+            .FirstOrDefaultAsync(p => p.ID == id);
     }
 }

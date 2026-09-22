@@ -1,3 +1,4 @@
+using NuGet.Packaging;
 using System.ComponentModel.DataAnnotations;
 
 namespace CVManagement.Models;
@@ -21,4 +22,18 @@ public class Position
     public DateTimeOffset LastUpdated { get; set; }
 
     public ICollection<CV> CVs { get; } = new List<CV>();
+
+    public Position Clone()
+    {
+        var clone = new Position()
+        {
+            Title = Title,
+            Description = Description,
+            MaxProjects = MaxProjects,
+            LastUpdated = DateTimeOffset.Now,
+        };
+        clone.Tags.AddRange(Tags);
+        clone.CVAttributes.AddRange(CVAttributes);
+        return clone;
+    }
 }

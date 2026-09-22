@@ -23,52 +23,34 @@ public class ApplicationController : Controller
         var existingTags = await context.Tags
             .Where(t => vmTags.Contains(t.ID.ToString()))
             .ToListAsync();
-
         var newTags = new List<string>(vmTags);
-
         foreach (var tag in existingTags)
             newTags.Remove(tag.ID.ToString());
-
         var newTagEntities = newTags.Select(t => new Tag() { Name = t }).ToList();
         context.AddRange(newTagEntities);
         existingTags.AddRange(newTagEntities);
-
         return existingTags;
     }
 
     protected void HandleDbException(DbUpdateException ex)
     {
         var defaultText = "Unable to save changes. Try again, and if the problem persists see your system administrator.";
-
         if (ex.InnerException is PostgresException sqlException)
-        {
             ModelState.AddModelError(string.Empty, $"SQL error occured. Code: '{sqlException.SqlState}'. " + defaultText);
-        }
         else
-        {
             ModelState.AddModelError(string.Empty, defaultText);
-        }
     }
 
     protected void HandleDbException(DbUpdateException ex, string uniqueFieldMessage)
     {
         var defaultText = "Unable to save changes. Try again, and if the problem persists see your system administrator.";
         var uniqueIndexErrorCode = "23505";
-
         if (ex.InnerException is PostgresException sqlException)
-        {
             if (sqlException.SqlState == uniqueIndexErrorCode)
-            {
                 ModelState.AddModelError(string.Empty, uniqueFieldMessage);
-            }
             else
-            {
                 ModelState.AddModelError(string.Empty, $"SQL error occured. Code: '{sqlException.SqlState}'. " + defaultText);
-            }
-        }
         else
-        {
             ModelState.AddModelError(string.Empty, defaultText);
-        }
     }
 }

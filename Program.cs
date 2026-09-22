@@ -56,7 +56,8 @@ app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
-    await DbSeeder.SeedAsync(scope.ServiceProvider);
+    var dbSeeder = new DbSeeder(scope.ServiceProvider);
+    await dbSeeder.SeedAsync();
 }
 
 app.MapStaticAssets();

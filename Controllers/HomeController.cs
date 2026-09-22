@@ -1,5 +1,6 @@
 using CVManagement.Data;
 using CVManagement.Models;
+using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,21 +8,10 @@ using System.Diagnostics;
 
 namespace CVManagement.Controllers;
 
-public class HomeViewModel
-{
-    public List<Position> LatestPositions { get; set; } = [];
-
-    public List<Position> PopularPositions { get; set; } = [];
-
-    public int TotalPositions { get; set; }
-
-    public int TotalCandidates { get; set; }
-
-    public int TotalCVs { get; set; }
-}
-
 public class HomeController : Controller
 {
+    public const int MaxLatestPositions = 5;
+
     private readonly ApplicationDbContext context;
 
     private readonly UserManager<ApplicationUser> userManager;
@@ -35,21 +25,13 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var positions = await context.Positions
-            .OrderByDescending(p => p.LastUpdated)
-            .Take(5)
-            .ToListAsync();
-        var totalPositions = await context.Positions.CountAsync();
-        var totalCandidates = await userManager.GetUsersInRoleAsync(DbSeeder.CandidateRole);
-        var totalCVs = await context.CV.CountAsync();
-
         return View(new HomeViewModel()
         {
-            LatestPositions = positions,
-            PopularPositions = positions,
-            TotalPositions = totalPositions,
-            TotalCandidates = totalCandidates.Count,
-            TotalCVs = totalCVs,
+            LatestPositions = await GetLatestPositions(),
+            PopularPositions = [],
+            TotalPositions = await context.Positions.CountAsync(),
+            TotalCandidates = (await userManager.GetUsersInRoleAsync(DbSeeder.CandidateRole)).Count,
+            TotalCVs = await context.CV.CountAsync(),
         });
     }
 
@@ -57,5 +39,13 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    private async Task<List<Position>> GetLatestPositions()
+    {
+        return await context.Positions
+            .OrderByDescending(p => p.LastUpdated)
+            .Take(MaxLatestPositions)
+            .ToListAsync();
     }
 }

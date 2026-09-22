@@ -23,7 +23,10 @@ public class CVModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         var userId = userManager.GetUserId(User);
-        CV = await context.CV.Where(p => p.UserId == userId).ToListAsync();
+        CV = await context.CV
+            .Where(p => p.UserId == userId)
+            .Include(p => p.Position)
+            .ToListAsync();
         return Page();
     }
 }

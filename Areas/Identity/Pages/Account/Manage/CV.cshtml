@@ -19,11 +19,9 @@
                 <th>
                     <input type="checkbox" id="select-all" />
                 </th>
-                <th>ID</th>
                 <th>
                     Position
                 </th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -31,12 +29,8 @@
             {
                 <tr>
                     <td><input type="checkbox" class="cv-checkbox" value="@item.ID" /></td>
-                    <td>@item.ID</td>
                     <td>
-                        @item.Position!.Title
-                    </td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.ID">Details</a>
+                        <a asp-action="Details" asp-route-id="@item.ID">@item.Position!.Title</a>
                     </td>
                 </tr>
             }

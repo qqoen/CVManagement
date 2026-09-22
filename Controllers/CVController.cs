@@ -1,4 +1,3 @@
-
 using CVManagement.Data;
 using CVManagement.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -25,33 +24,13 @@ public class CVController : ApplicationController
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
-        var cv = await context.CV.FirstOrDefaultAsync(m => m.ID == id);
+        var cv = await context.CV
+            .Include(cv => cv.CVAttributeValues)
+            .Include(cv => cv.Position)
+            .Include(cv => cv.User)
+            .FirstOrDefaultAsync(cv => cv.ID == id);
         if (cv == null) return NotFound();
         return View(cv);
-    }
-
-    [HttpPost]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
-    public async Task<IActionResult> Create(int? positionId)
-    {
-        if (positionId == null) return NotFound();
-        var position = await context.Positions.FindAsync(positionId);
-        if (position == null) return NotFound();
-        var user = await userManager.GetUserAsync(User);
-        var existingCV = await context.CV.FirstOrDefaultAsync(cv => cv.UserId == user.Id && cv.PositionID == position.ID);
-        if (existingCV != null) return NotFound();
-
-        var cv = new CV()
-        {
-            PositionID = position.ID,
-            Position = position,
-            UserId = user.Id,
-            User = user,
-        };
-
-        context.Add(cv);
-        await context.SaveChangesAsync();
-        return RedirectToAction(nameof(Details), new { id = cv.ID });
     }
 
     [Authorize(Roles = DbSeeder.CandidateRole)]

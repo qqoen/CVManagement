@@ -1,7 +1,7 @@
 ﻿@using CVManagement.Data
 @using Microsoft.AspNetCore.Identity
-@inject SignInManager<ApplicationUser> SignInManager
-@model List<CVManagement.Models.CVAttribute>;
+@inject SignInManager<ApplicationUser> SignInManager;
+@model CVManagement.Controllers.CVAttributeController.CVAttributesViewModel
 
 @{
     ViewData["Title"] = "Attributes";
@@ -14,21 +14,26 @@
 <h1>@ViewData["Title"]</h1>
 <hr />
 
-@if (hasRecruiterRights)
-{
+<form asp-action="Index" method="get">
     <div class="d-flex gap-2 mb-3">
-        <button class="btn btn-danger" id="delete-btn">Delete</button>
-        <a class="btn btn-primary" asp-action="Create">Create New</a>
+        @if (hasRecruiterRights)
+        {
+            <button class="btn btn-danger" id="delete-btn">Delete</button>
+            <a class="btn btn-primary" asp-action="Create">Create New</a>
+        }
+        @if (hasCandidateRights)
+        {
+            <button class="btn btn-primary" id="add-btn">Add to my library</button>
+        }
+        <div class="col-md-4">
+            <div class="input-group">
+                <input class="form-control" type="text" placeholder="Attribute Name" asp-for="SearchString" />
+                <input class="btn btn-primary" type="submit" value="Search" />
+            </div>
+        </div>
     </div>
-    <hr />
-}
-@if (hasCandidateRights)
-{
-    <div class="d-flex gap-2 mb-3">
-        <button class="btn btn-primary" id="add-btn">Add to my library</button>
-    </div>
-    <hr />
-}
+</form>
+<hr />
 
 <table class="table table-striped">
     <thead>
@@ -39,43 +44,43 @@
                     <input type="checkbox" id="select-all" />            
                 }
             </th>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Data Type</th>
-            <th>Is Mandatory</th>
+            <th>@Html.DisplayNameFor(model => model.CVAttributes[0].Name)</th>
+            <th>@Html.DisplayNameFor(model => model.CVAttributes[0].Description)</th>
+            <th>@Html.DisplayNameFor(model => model.CVAttributes[0].Category)</th>
+            <th>@Html.DisplayNameFor(model => model.CVAttributes[0].DataType)</th>
+            <th>@Html.DisplayNameFor(model => model.CVAttributes[0].IsMandatory)</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var cvattribute in Model)
+        @foreach (var item in Model.CVAttributes)
         {
             <tr>
                 <td>
-                    @if (isSignedIn && !cvattribute.IsMandatory)
+                    @if (isSignedIn && !item.IsMandatory)
                     {
-                        <input type="checkbox" class="attribute-checkbox" value="@cvattribute.ID" />                
+                        <input type="checkbox" class="attribute-checkbox" value="@item.ID" />
                     }
                 </td>
                 <td>
                     @if (hasRecruiterRights)
                     {
-                        <a asp-action="Edit" asp-route-id="@cvattribute.ID">@cvattribute.Name</a>
+                        <a asp-action="Edit" asp-route-id="@item.ID">@Html.DisplayFor(_ => item.Name)</a>
                     }
                     else
                     {
-                        @cvattribute.Name
+                        @Html.DisplayFor(_ => item.Name)
                     }
                 </td>
-                <td>@cvattribute.Description</td>
-                <td>@cvattribute.Category?.Name</td>
-                <td>@cvattribute.DataType</td>
-                <td>@cvattribute.IsMandatory</td>
+                <td>@Html.DisplayFor(_ => item.Description)</td>
+                <td>@Html.DisplayFor(_ => item.Category!.Name)</td>
+                <td>@Html.DisplayFor(_ => item.DataType)</td>
+                <td>@Html.DisplayFor(_ => item.IsMandatory)</td>
             </tr>
         }
     </tbody>
 </table>
 
-@if (Model.Count == 0)
+@if (Model.CVAttributes.Count == 0)
 {
     <p class="text-center">List is empty.</p>
 }

@@ -23,14 +23,25 @@ public class CVAttributeController : ApplicationController
         this.userManager = userManager;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> Index()
+    public class CVAttributesViewModel
     {
-        var attributes = await context.CVAttributes
-            .OrderBy(a => a.Name)
-            .Include(a => a.Category)
-            .ToListAsync();
-        return View(attributes);
+        public string? SearchString { get; set; }
+
+        public List<CVAttribute> CVAttributes { get; set; } = [];
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Index(string searchString)
+    {
+        var query = context.CVAttributes.Select(a => a);
+        if (!string.IsNullOrWhiteSpace(searchString))
+            query = query.Where(a => a.Name.ToLower().Contains(searchString.ToLower()));
+        query = query.OrderBy(a => a.Name).Include(a => a.Category);
+        return View(new CVAttributesViewModel()
+        {
+            SearchString = searchString,
+            CVAttributes = await query.ToListAsync()
+        });
     }
 
     [HttpGet]

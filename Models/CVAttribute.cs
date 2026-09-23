@@ -1,5 +1,6 @@
 ﻿using CVManagement.Data;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace CVManagement.Models;
 
@@ -12,12 +13,14 @@ public class CVAttribute
 
     public string Description { get; set; } = string.Empty;
 
+    [Display(Name = "Mandatory")]
     public bool IsMandatory { get; set; }
 
     public int? CategoryID { get; set; }
 
     public Category? Category { get; set; }
 
+    [Display(Name = "Data Type")]
     public CVAttributeDataType DataType { get; set; }
 
     public ICollection<CVAttributeValue> CVAttributeValues { get; } = new List<CVAttributeValue>();

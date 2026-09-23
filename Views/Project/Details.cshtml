@@ -4,11 +4,16 @@
     ViewData["Title"] = "Project Details";
 }
 
-<div>
-    <h1>@Html.DisplayFor(model => model.Name)</h1>
-    <a asp-area="Identity" asp-page="/Account/Manage/Projects">Back to List</a>
-</div>
-<hr />
+<partial name="_HeaderPartial" />
+
+<dl class="row">
+    <dt>
+        @Html.DisplayNameFor(model => model.Name)
+    </dt>
+    <dd>
+        @Html.DisplayFor(model => model.Name)
+    </dd>
+</dl>
 
 <dl class="row">
     <dt>

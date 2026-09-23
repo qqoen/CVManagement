@@ -4,11 +4,7 @@
     ViewData["Title"] = "CV Details";
 }
 
-<div>
-    <h1>@ViewData["Title"]</h1>
-    <a asp-action="Index">Back to List</a>
-</div>
-<hr />
+<partial name="_HeaderPartial" />
 
 <dl>
     <dt>
@@ -27,6 +23,20 @@
         @Html.DisplayFor(model => model.User!.UserName)
     </dd>
 </dl>
+
+<h3>Info</h3>
+
+@foreach (var value in Model.CVAttributeValues)
+{
+    <dl>
+        <dt>
+            @* @value.CVAttribute!.Name *@
+        </dt>
+        <dd>
+            @value.Value
+        </dd>
+    </dl>
+}
 
 <hr />
 <div>

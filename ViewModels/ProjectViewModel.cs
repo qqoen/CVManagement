@@ -39,8 +39,8 @@ public class ProjectViewModel
     {
         var project = new Project
         {
-            Name = Name,
-            Description = Description,
+            Name = Name.Trim(),
+            Description = Description.Trim(),
             StartDate = StartDate,
             EndDate = EndDate,
             UserId = userId,
@@ -51,8 +51,8 @@ public class ProjectViewModel
 
     public void UpdateProjectModel(Project project, List<Tag> tags)
     {
-        project.Name = Name;
-        project.Description = Description;
+        project.Name = Name.Trim();
+        project.Description = Description.Trim();
         project.StartDate = StartDate;
         project.EndDate = EndDate;
         project.Tags.Clear();

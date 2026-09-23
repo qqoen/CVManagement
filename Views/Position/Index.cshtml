@@ -6,14 +6,14 @@
 @{
     ViewData["Title"] = "All Positions";
     var isSignedIn = SignInManager.IsSignedIn(User);
-    var isRecruiter = User.IsInRole(DbSeeder.RecruiterRole);
+    var isAdmin = isSignedIn && User.IsInRole(DbSeeder.AdminRole);
+    var hasRecruiterRights = isSignedIn && User.IsInRole(DbSeeder.RecruiterRole) || isAdmin;
 }
 
 <h1>@ViewData["Title"]</h1>
-
 <hr />
 
-@if (isSignedIn && isRecruiter)
+@if (hasRecruiterRights)
 {
     <div class="d-flex gap-2 mb-3">
         <button class="btn btn-danger" id="delete-btn">Delete</button>
@@ -24,7 +24,7 @@
 <table class="table table-striped" id="positions-table">
     <thead>
         <tr>
-            @if (isSignedIn && isRecruiter)
+            @if (hasRecruiterRights)
             {
                 <th><input type="checkbox" id="select-all" /></th>
             }
@@ -38,7 +38,7 @@
         @foreach (var position in Model)
         {
             <tr>
-                @if (isSignedIn && isRecruiter)
+                @if (hasRecruiterRights)
                 {
                     <td><input type="checkbox" class="position-checkbox" value="@position.ID" /></td>
                 }

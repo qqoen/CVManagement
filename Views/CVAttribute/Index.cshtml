@@ -6,14 +6,15 @@
 @{
     ViewData["Title"] = "Attributes";
     var isSignedIn = SignInManager.IsSignedIn(User);
-    var isRecruiter = User.IsInRole(DbSeeder.RecruiterRole);
-    var isCandidate = User.IsInRole(DbSeeder.CandidateRole);
+    var isAdmin = isSignedIn && User.IsInRole(DbSeeder.AdminRole);
+    var hasRecruiterRights = isSignedIn && User.IsInRole(DbSeeder.RecruiterRole) || isAdmin;
+    var hasCandidateRights = isSignedIn && User.IsInRole(DbSeeder.CandidateRole) || isAdmin;
 }
 
 <h1>@ViewData["Title"]</h1>
 <hr />
 
-@if (isSignedIn && isRecruiter)
+@if (hasRecruiterRights)
 {
     <div class="d-flex gap-2 mb-3">
         <button class="btn btn-danger" id="delete-btn">Delete</button>
@@ -21,7 +22,7 @@
     </div>
     <hr />
 }
-@if (isSignedIn && isCandidate)
+@if (hasCandidateRights)
 {
     <div class="d-flex gap-2 mb-3">
         <button class="btn btn-primary" id="add-btn">Add to my library</button>
@@ -56,7 +57,7 @@
                     }
                 </td>
                 <td>
-                    @if (isSignedIn && isRecruiter)
+                    @if (hasRecruiterRights)
                     {
                         <a asp-action="Edit" asp-route-id="@cvattribute.ID">@cvattribute.Name</a>
                     }

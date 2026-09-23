@@ -6,8 +6,7 @@
     var attributes = ViewData["AttributesList"] as IEnumerable<SelectListItem>;
 }
 
-<h1>@ViewData["Title"]</h1>
-<hr />
+<partial name="_HeaderPartial" />
 
 <div class="row">
     <div class="col-md-4">
@@ -53,10 +52,6 @@
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {

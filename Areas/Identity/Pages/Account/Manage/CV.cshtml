@@ -30,7 +30,7 @@
                 <tr>
                     <td><input type="checkbox" class="cv-checkbox" value="@item.ID" /></td>
                     <td>
-                        <a asp-action="Details" asp-route-id="@item.ID">@item.Position!.Title</a>
+                        <a asp-controller="CV" asp-action="Details" asp-route-id="@item.ID">@item.Position!.Title</a>
                     </td>
                 </tr>
             }

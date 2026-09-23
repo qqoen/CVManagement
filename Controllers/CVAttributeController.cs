@@ -34,7 +34,7 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = DbSeeder.RecruiterRole)]
+    [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Create()
     {
         await PrepareCategories();
@@ -42,11 +42,12 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.RecruiterRole)]
+    [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Create(CVAttribute attribute)
     {
         if (ModelState.IsValid)
         {
+            attribute.Format();
             context.Add(attribute);
             try
             {
@@ -55,32 +56,32 @@ public class CVAttributeController : ApplicationController
             }
             catch (DbUpdateException ex)
             {
-                HandleDbException(ex, $"Name '{attribute.Name}' already exists.");
+                HandleUniqueNameException(ex, attribute);
             }
         }
+        await PrepareCategories();
         return View(attribute);
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.RecruiterRole)]
+    [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        var attributes = context.CVAttributes
-            .Where(a => !a.IsMandatory && selectedIds.Contains(a.ID));
+        var attributes = context.CVAttributes.Where(a => !a.IsMandatory && selectedIds.Contains(a.ID));
         context.RemoveRange(attributes);
         await context.SaveChangesAsync();
         return Ok();
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> AddToUser([FromBody] List<int> selectedIds)
     {
         var userId = userManager.GetUserId(User);
         var user = await context.Users
             .Include(u => u.CVAttributes)
             .FirstOrDefaultAsync(u => u.Id == userId);
-        var userAttributeIds = user.CVAttributes.Select(a => a.ID).ToList();
+        var userAttributeIds = user!.CVAttributes.Select(a => a.ID).ToList();
         var attributes = context.CVAttributes
             .Where(a => !a.IsMandatory && selectedIds.Contains(a.ID) && !userAttributeIds.Contains(a.ID));
         user.CVAttributes.AddRange(attributes);
@@ -90,23 +91,23 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = DbSeeder.RecruiterRole)]
+    [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Edit(int id)
     {
-        var attribute = await context.CVAttributes
-            .FirstOrDefaultAsync(s => s.ID == id);
+        var attribute = await context.CVAttributes.FindAsync(id);
         if (attribute == null) return NotFound();
         await PrepareCategories();
         return View(attribute);
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.RecruiterRole)]
+    [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Edit(int id, CVAttribute attribute)
     {
         if (id != attribute.ID) return NotFound();
         if (ModelState.IsValid)
         {
+            attribute.Format();
             context.Update(attribute);
             try
             {
@@ -115,14 +116,14 @@ public class CVAttributeController : ApplicationController
             }
             catch (DbUpdateException ex)
             {
-                HandleDbException(ex, $"Name '{attribute.Name}' already exists.");
+                HandleUniqueNameException(ex, attribute);
             }
         }
         return View(attribute);
     }
 
     [HttpGet]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> FillValue(int id)
     {
         var attribute = await context.CVAttributes
@@ -136,7 +137,7 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> FillValue(int id, FillValueViewModel fillValueViewModel)
     {
         var attribute = await context.CVAttributes.FindAsync(id);
@@ -171,5 +172,11 @@ public class CVAttributeController : ApplicationController
         foreach (var category in categories)
             selectList.Add(new SelectListItem(category.Name, category.ID.ToString()));
         ViewData["Categories"] = selectList;
+    }
+
+    private void HandleUniqueNameException(DbUpdateException ex, CVAttribute attribute)
+    {
+        var constraintName = "IX_CVAttributes_Name";
+        HandleDbException(ex, $"Name '{attribute.Name}' already exists.", constraintName);
     }
 }

@@ -41,12 +41,12 @@ public class ApplicationController : Controller
             ModelState.AddModelError(string.Empty, defaultText);
     }
 
-    protected void HandleDbException(DbUpdateException ex, string uniqueFieldMessage)
+    protected void HandleDbException(DbUpdateException ex, string uniqueFieldMessage, string constraint="")
     {
         var defaultText = "Unable to save changes. Try again, and if the problem persists see your system administrator.";
         var uniqueIndexErrorCode = "23505";
         if (ex.InnerException is PostgresException sqlException)
-            if (sqlException.SqlState == uniqueIndexErrorCode)
+            if (sqlException.SqlState == uniqueIndexErrorCode && (constraint == "" || sqlException.ConstraintName == constraint))
                 ModelState.AddModelError(string.Empty, uniqueFieldMessage);
             else
                 ModelState.AddModelError(string.Empty, $"SQL error occured. Code: '{sqlException.SqlState}'. " + defaultText);

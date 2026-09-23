@@ -21,32 +21,28 @@ public class CVController : ApplicationController
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin, Candidate, Recruiter")]
     public async Task<IActionResult> Details(int? id)
     {
-        if (id == null) return NotFound();
-        var cv = await context.CV
-            .Include(cv => cv.CVAttributeValues)
-            .Include(cv => cv.Position)
-            .Include(cv => cv.User)
-            .FirstOrDefaultAsync(cv => cv.ID == id);
+        var cv = await GetCV(id);
         if (cv == null) return NotFound();
+        if (User.IsInRole(DbSeeder.CandidateRole) && !IsOwner(cv)) return NotFound();
         return View(cv);
     }
 
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Edit(int? id)
     {
-        if (id == null) return NotFound();
-        var cv = await context.CV.FindAsync(id);
-        if (cv == null) return NotFound();
+        var cv = await GetCV(id);
+        if (cv == null || !IsOwner(cv)) return NotFound();
         return View(cv);
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Edit(int? id, CV cv)
     {
-        if (id != cv.ID) return NotFound();
+        if (id != cv.ID || !IsOwner(cv)) return NotFound();
         if (ModelState.IsValid)
         {
             context.Update(cv);
@@ -57,12 +53,27 @@ public class CVController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        var cvs = context.CV.Where(cv => selectedIds.Contains(cv.ID));
+        var cvs = context.CV.Where(cv => selectedIds.Contains(cv.ID) && IsOwner(cv));
         context.RemoveRange(cvs);
         await context.SaveChangesAsync();
         return Ok();
+    }
+
+    private bool IsOwner(CV cv)
+    {
+        return cv.UserId == userManager.GetUserId(User);
+    }
+
+    private async Task<CV> GetCV(int? id)
+    {
+        if (id == null) return null;
+        return await context.CV
+            .Include(cv => cv.CVAttributeValues)
+            .Include(cv => cv.Position)
+            .Include(cv => cv.User)
+            .FirstOrDefaultAsync(cv => cv.ID == id);
     }
 }

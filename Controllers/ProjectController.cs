@@ -27,8 +27,7 @@ public class ProjectController : ApplicationController
     {
         var project = await GetProject(id);
         if (project == null) return NotFound();
-        var userId = userManager.GetUserId(User);
-        if (project.UserId == userId || User.IsInRole(DbSeeder.RecruiterRole))
+        if (CanView(project))
         {
             ViewData["TagList"] = string.Join(", ", project.Tags.Select(t => t.Name));
             return View(project);
@@ -37,7 +36,7 @@ public class ProjectController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Create()
     {
         await PrepareTags(context, new List<string>());
@@ -49,7 +48,7 @@ public class ProjectController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Create(ProjectViewModel vm)
     {
         if (ModelState.IsValid)
@@ -60,29 +59,28 @@ public class ProjectController : ApplicationController
             await context.SaveChangesAsync();
             return RedirectToAction(nameof(Details), new { id = project.ID });
         }
+        await PrepareTags(context, new List<string>());
         return View(vm);
     }
 
     [HttpGet]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Edit(int? id)
     {
         var project = await GetProject(id);
         if (project == null) return NotFound();
-        var userId = userManager.GetUserId(User);
-        if (project.UserId != userId) return NotFound();
+        if (!CanEdit(project)) return NotFound();
         await PrepareTags(context, project.Tags.Select(t => t.ID.ToString()).ToList());
         return View(ProjectViewModel.Create(project));
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Edit(int? id, ProjectViewModel vm)
     {
         if (id != vm.ID) return NotFound();
-        var userId = userManager.GetUserId(User);
-        var project = await context.Project.FindAsync(id);
-        if (project == null || project.UserId != userId) return NotFound();
+        var project = await GetProject(id);
+        if (project == null || !CanEdit(project)) return NotFound();
         if (ModelState.IsValid)
         {
             var tags = await GetTrackableTags(context, vm.Tags);
@@ -98,15 +96,16 @@ public class ProjectController : ApplicationController
                 HandleDbException(ex);
             }
         }
+        await PrepareTags(context, project.Tags.Select(t => t.ID.ToString()).ToList());
         return View(vm);
     }
 
     [HttpPost]
-    [Authorize(Roles = DbSeeder.CandidateRole)]
+    [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
         var userId = userManager.GetUserId(User);
-        var projects = context.Project.Where(p => p.UserId == userId && selectedIds.Contains(p.ID));
+        var projects = context.Project.Where(p => selectedIds.Contains(p.ID) && p.UserId == userId);
         context.RemoveRange(projects);
         await context.SaveChangesAsync();
         return Ok();
@@ -118,5 +117,17 @@ public class ProjectController : ApplicationController
         return await context.Project
             .Include(p => p.Tags)
             .FirstOrDefaultAsync(p => p.ID == id);
+    }
+
+    private bool CanView(Project project)
+    {
+        var userId = userManager.GetUserId(User);
+        return project.UserId == userId || User.IsInRole(DbSeeder.RecruiterRole) || User.IsInRole(DbSeeder.AdminRole);
+    }
+
+    private bool CanEdit(Project project)
+    {
+        var userId = userManager.GetUserId(User);
+        return project.UserId == userId || User.IsInRole(DbSeeder.AdminRole);
     }
 }

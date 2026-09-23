@@ -1,15 +1,11 @@
 @model CVManagement.ViewModels.ProjectViewModel;
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Project";
     var tags = ViewData["TagList"] as IEnumerable<SelectListItem>;
 }
 
-<div>
-    <h1>Edit Project</h1>
-    <a asp-action="Details" asp-controller="Project""" asp-route-id="@Model.ID">Back to Project</a>
-</div>
-<hr />
+<partial name="_HeaderPartial" />
 
 <div class="row">
     <div class="col-md-4">

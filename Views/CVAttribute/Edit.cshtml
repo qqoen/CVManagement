@@ -1,14 +1,12 @@
 @model CVManagement.Models.CVAttribute
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Attribute";
     var categories = ViewData["Categories"] as IEnumerable<SelectListItem>;
 }
 
-<h1>Edit</h1>
+<partial name="_HeaderPartial" />
 
-<h4>CVAttribute</h4>
-<hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
@@ -42,10 +40,6 @@
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {

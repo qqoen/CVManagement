@@ -25,4 +25,10 @@ public class CVAttribute
     public ICollection<ApplicationUser> Users { get; } = new List<ApplicationUser>();
 
     public ICollection<Position> Positions { get; } = new List<Position>();
+
+    public void Format()
+    {
+        Name = Name.Trim();
+        Description = Description.Trim();
+    }
 }

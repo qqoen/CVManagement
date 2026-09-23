@@ -1,15 +1,11 @@
 @model CVManagement.ViewModels.ProjectViewModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Project";
     var tags = ViewData["TagList"] as IEnumerable<SelectListItem>;
 }
 
-<div>
-    <h1>Create Project</h1>
-    <a asp-area="Identity" asp-page="/Account/Manage/Projects">Back to List</a>
-</div>
-<hr />
+<partial name="_HeaderPartial" />
 
 <div class="row">
     <div class="col-md-4">

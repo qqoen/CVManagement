@@ -4,7 +4,25 @@
     ViewData["Title"] = "Edit CV";
 }
 
-<h1>Edit CV</h1>
+<partial name="_HeaderPartial" />
+
+<dl>
+    <dt>
+        Position
+    </dt>
+    <dd>
+        @Html.DisplayFor(model => model.Position!.Title)
+    </dd>
+</dl>
+
+<dl>
+    <dt>
+        Candidate
+    </dt>
+    <dd>
+        @Html.DisplayFor(model => model.User!.UserName)
+    </dd>
+</dl>
 
 <div class="row">
     <div class="col-md-4">
@@ -16,10 +34,6 @@
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {

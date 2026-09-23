@@ -41,8 +41,8 @@ public class PositionViewModel
         var position = new Position()
         {
             ID = ID,
-            Title = Title,
-            Description = Description,
+            Title = Title.Trim(),
+            Description = Description.Trim(),
             MaxProjects = MaxProjects,
             LastUpdated = DateTimeOffset.Now,
         };
@@ -53,8 +53,8 @@ public class PositionViewModel
 
     public void UpdatePositionModel(Position position, List<Tag> tags, List<CVAttribute> attribtes)
     {
-        position.Title = Title;
-        position.Description = Description;
+        position.Title = Title.Trim();
+        position.Description = Description.Trim();
         position.MaxProjects = MaxProjects;
         position.LastUpdated = DateTimeOffset.Now;
         position.Tags.Clear();

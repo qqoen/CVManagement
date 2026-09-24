@@ -134,7 +134,7 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin, Candidate")]
+    [Authorize(Roles = "Admin, Recruiter, Candidate")]
     public async Task<IActionResult> FillValue(int id)
     {
         var attribute = await context.CVAttributes
@@ -148,7 +148,7 @@ public class CVAttributeController : ApplicationController
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin, Candidate")]
+    [Authorize(Roles = "Admin, Recruiter, Candidate")]
     public async Task<IActionResult> FillValue(int id, FillValueViewModel fillValueViewModel)
     {
         var attribute = await context.CVAttributes.FindAsync(id);

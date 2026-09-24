@@ -14,25 +14,25 @@
 <h1>@ViewData["Title"]</h1>
 <hr />
 
-<form asp-action="Index" method="get">
-    <div class="d-flex gap-2 mb-3">
-        @if (hasRecruiterRights)
-        {
-            <button class="btn btn-danger" id="delete-btn">Delete</button>
-            <a class="btn btn-primary" asp-action="Create">Create New</a>
-        }
-        @if (hasCandidateRights)
-        {
-            <button class="btn btn-primary" id="add-btn">Add to my library</button>
-        }
-        <div class="col-md-4">
+<div class="d-flex gap-2 mb-3">
+    @if (hasRecruiterRights)
+    {
+        <button class="btn btn-danger" id="delete-btn">Delete</button>
+        <a class="btn btn-primary" asp-action="Create">Create New</a>
+    }
+    @if (hasCandidateRights)
+    {
+        <button class="btn btn-primary" id="add-btn">Add to my library</button>
+    }
+    <div class="col-md-4">
+        <form asp-action="Index" method="get">
             <div class="input-group">
                 <input class="form-control" type="text" placeholder="Attribute Name" asp-for="SearchString" />
                 <input class="btn btn-primary" type="submit" value="Search" />
             </div>
-        </div>
+        </form>
     </div>
-</form>
+</div>
 <hr />
 
 <table class="table table-striped">

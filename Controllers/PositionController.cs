@@ -163,7 +163,7 @@ public class PositionController : ApplicationController
         var userValues = user.CVAttributeValues.Where(v => requiredAttributeIds.Contains((int)v.CVAttributeID)).ToList();
         if (userValues.Count < requiredAttributeIds.Count)
         {
-            ModelState.AddModelError(string.Empty, "Some attributes are missing from your library.");
+            ModelState.AddModelError(string.Empty, "Some attributes are missing from your library or they are not filled.");
             return null;
         }
         return CreateCVModel(position, user, userValues);

@@ -56,7 +56,8 @@ public class CVController : ApplicationController
     [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        var cvs = context.CV.Where(cv => selectedIds.Contains(cv.ID) && IsOwner(cv));
+        var userId = userManager.GetUserId(User);
+        var cvs = context.CV.Where(cv => selectedIds.Contains(cv.ID) && cv.UserId == userId);
         context.RemoveRange(cvs);
         await context.SaveChangesAsync();
         return Ok();

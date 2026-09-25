@@ -3,7 +3,6 @@ using CVManagement.Models;
 using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
@@ -33,6 +32,7 @@ public class HomeController : Controller
             TotalPositions = await context.Positions.CountAsync(),
             TotalCandidates = (await userManager.GetUsersInRoleAsync(DbSeeder.CandidateRole)).Count,
             TotalCVs = await context.CV.CountAsync(),
+            Tags = await context.Tags.Select(t => t.Name).ToListAsync(),
         });
     }
 

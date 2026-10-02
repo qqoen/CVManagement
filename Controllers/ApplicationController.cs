@@ -1,5 +1,4 @@
-﻿using CVManagement.Data;
-using CVManagement.Models;
+﻿using CVManagement.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,27 +8,24 @@ namespace CVManagement.Controllers;
 
 public class ApplicationController : Controller
 {
-    protected async Task PrepareTags(ApplicationDbContext context, List<string> selected)
+    protected void PrepareTags(List<Tag> tags, Position position)
     {
-        var tags = await context.Tags.ToListAsync();
+        var selected = position.Tags.Select(t => t.ID.ToString()).ToList();
+        PrepareTags(tags, selected);
+    }
+
+    protected void PrepareTags(List<Tag> tags, Project project)
+    {
+        var selected = project.Tags.Select(t => t.ID.ToString()).ToList();
+        PrepareTags(tags, selected);
+    }
+
+    protected void PrepareTags(List<Tag> tags, List<string> selected)
+    {
         var selectList = new List<SelectListItem>();
         foreach (var tag in tags)
             selectList.Add(new SelectListItem(tag.Name, tag.ID.ToString(), selected.Contains(tag.ID.ToString())));
         ViewData["TagList"] = selectList;
-    }
-
-    protected async Task<List<Tag>> GetTrackableTags(ApplicationDbContext context, List<string> vmTags)
-    {
-        var existingTags = await context.Tags
-            .Where(t => vmTags.Contains(t.ID.ToString()))
-            .ToListAsync();
-        var newTags = new List<string>(vmTags);
-        foreach (var tag in existingTags)
-            newTags.Remove(tag.ID.ToString());
-        var newTagEntities = newTags.Select(t => new Tag() { Name = t }).ToList();
-        context.AddRange(newTagEntities);
-        existingTags.AddRange(newTagEntities);
-        return existingTags;
     }
 
     protected void HandleDbException(DbUpdateException ex)

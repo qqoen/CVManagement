@@ -1,5 +1,6 @@
 using CVManagement.Data;
 using CVManagement.Models;
+using CVManagement.Services;
 using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,10 +17,16 @@ public class HomeController : Controller
 
     private readonly UserManager<ApplicationUser> userManager;
 
-    public HomeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    private readonly PositionService positionService;
+
+    public HomeController(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        PositionService positionService)
     {
         this.context = context;
         this.userManager = userManager;
+        this.positionService = positionService;
     }
 
     [HttpGet]
@@ -27,7 +34,7 @@ public class HomeController : Controller
     {
         return View(new HomeViewModel()
         {
-            LatestPositions = await GetLatestPositions(),
+            LatestPositions = await positionService.GetLatestPositions(MaxLatestPositions),
             PopularPositions = [],
             TotalPositions = await context.Positions.CountAsync(),
             TotalCandidates = (await userManager.GetUsersInRoleAsync(DbSeeder.CandidateRole)).Count,
@@ -61,13 +68,5 @@ public class HomeController : Controller
                     RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
                 });
         }    
-    }
-
-    private async Task<List<Position>> GetLatestPositions()
-    {
-        return await context.Positions
-            .OrderByDescending(p => p.LastUpdated)
-            .Take(MaxLatestPositions)
-            .ToListAsync();
     }
 }

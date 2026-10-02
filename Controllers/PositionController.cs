@@ -1,40 +1,41 @@
-﻿using CVManagement.Data;
-using CVManagement.Models;
+﻿using CVManagement.Models;
+using CVManagement.Services;
 using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using NuGet.Packaging;
 
 namespace CVManagement.Controllers;
 
 public class PositionController : ApplicationController
 {
-    private readonly ApplicationDbContext context;
+    private readonly TagService tagService;
 
-    private readonly UserManager<ApplicationUser> userManager;
+    private readonly PositionService positionService;
 
-    public PositionController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    private readonly CVAttributeService attributeService;
+
+    public PositionController(
+        TagService tagService,
+        PositionService positionService,
+        CVAttributeService attributeService)
     {
-        this.context = context;
-        this.userManager = userManager;
+        this.tagService = tagService;
+        this.positionService = positionService;
+        this.attributeService = attributeService;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var positions = await context.Positions
-            .OrderBy(p => p.Title)
-            .ToListAsync();
-        return View(positions);
+        return View(await positionService.GetList());
     }
 
     [HttpGet]
     public async Task<IActionResult> Details(int? id)
     {
-        var position = await GetPosition(id);
+        var position = await positionService.GetPosition(id);
         if (position == null) return NotFound();
         return View(PositionViewModel.Create(position));
     }
@@ -43,41 +44,35 @@ public class PositionController : ApplicationController
     [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Create()
     {
-        await PrepareTags(context, new List<string>());
-        await PrepareAttributes(new List<string>());
+        PrepareTags(await tagService.GetAll(), []);
+        PrepareAttributes(await attributeService.GetOptional(), []);
         return View(new PositionViewModel());
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin, Recruiter")]
-    public async Task<IActionResult> Create(PositionViewModel positionVm)
+    public async Task<IActionResult> Create(PositionViewModel vm)
     {
         if (ModelState.IsValid)
         {
-            var tags = await GetTrackableTags(context, positionVm.Tags);
-            var attributes = await GetAttributes(positionVm);
-            var position = positionVm.CreatePositionModel(tags, attributes);
-            context.Add(position);
             try
             {
-                await context.SaveChangesAsync();
+                await positionService.Create(vm);
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException ex)
             {
-                HandleDbException(ex, $"Title '{positionVm.Title}' already exists.");
+                HandleDbException(ex, $"Title '{vm.Title}' already exists.");
             }
         }
-        return View(positionVm);
+        return View(vm);
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        var positions = context.Positions.Where(p => selectedIds.Contains(p.ID));
-        context.RemoveRange(positions);
-        await context.SaveChangesAsync();
+        await positionService.Delete(selectedIds);
         return Ok();
     }
 
@@ -85,10 +80,10 @@ public class PositionController : ApplicationController
     [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Edit(int? id)
     {
-        var position = await GetPosition(id);
+        var position = await positionService.GetPosition(id);
         if (position == null) return NotFound();
-        await PrepareTags(context, position.Tags.Select(t => t.ID.ToString()).ToList());
-        await PrepareAttributes(position.CVAttributes.Select(a => a.ID.ToString()).ToList());
+        PrepareTags(await tagService.GetAll(), position);
+        PrepareAttributes(await attributeService.GetOptional(), position);
         return View(PositionViewModel.Create(position));
     }
 
@@ -96,17 +91,13 @@ public class PositionController : ApplicationController
     [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Edit(int? id, PositionViewModel positionVm)
     {
+        var position = await positionService.GetPosition(id);
+        if (position == null) return NotFound();
         if (ModelState.IsValid)
         {
-            var position = await GetPosition(id);
-            if (position == null) return NotFound();
-            var tags = await GetTrackableTags(context, positionVm.Tags);
-            var attributes = await GetAttributes(positionVm);
-            positionVm.UpdatePositionModel(position, tags, attributes);
-            context.Update(position);
             try
             {
-                await context.SaveChangesAsync();
+                await positionService.Update(position, positionVm);
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException ex)
@@ -121,12 +112,11 @@ public class PositionController : ApplicationController
     [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Duplicate(int id)
     {
-        var position = await GetPosition(id);
+        var position = await positionService.GetPosition(id);
         if (position == null) return NotFound();
-        context.Add(position.Clone());
         try
         {
-            await context.SaveChangesAsync();
+            await positionService.Duplicate(position);
             return RedirectToAction(nameof(Index));
         }
         catch (DbUpdateException ex)
@@ -140,77 +130,27 @@ public class PositionController : ApplicationController
     [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> SubmitCV(int id)
     {
-        var position = await GetPosition(id);
+        var position = await positionService.GetPosition(id);
         if (position == null) return NotFound();
-        var user = (await GetCurrentUser())!;
-        var cv = await TryCreateCV(position, user);
-        if (cv == null)
+        try
+        {
+            var cv = await positionService.GenerateCV(User, position);
+            return RedirectToAction("Details", "CV", new { id = cv.ID });
+        }
+        catch (PositionService.PositionValidationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
             return View(nameof(Details), PositionViewModel.Create(position));
-        context.Add(cv);
-        await context.SaveChangesAsync();
-        return RedirectToAction("Details", "CV", new { id = cv.ID });
-    }
-
-    private async Task<CV?> TryCreateCV(Position position, ApplicationUser user)
-    {
-        var existingCV = await context.CV.FirstOrDefaultAsync(cv => cv.UserId == user.Id && cv.PositionID == position.ID);
-        if (existingCV != null)
-        {
-            ModelState.AddModelError(string.Empty, "You already submitted CV to this position.");
-            return null;
         }
-        var requiredAttributeIds = position.CVAttributes.Select(a => a.ID).ToList();
-        var userValues = user.CVAttributeValues.Where(v => requiredAttributeIds.Contains((int)v.CVAttributeID)).ToList();
-        if (userValues.Count < requiredAttributeIds.Count)
-        {
-            ModelState.AddModelError(string.Empty, "Some attributes are missing from your library or they are not filled.");
-            return null;
-        }
-        return CreateCVModel(position, user, userValues);
     }
 
-    private CV CreateCVModel(Position position, ApplicationUser user, List<CVAttributeValue> userValues)
+    private void PrepareAttributes(List<CVAttribute> attributes, Position position)
     {
-        var cv = new CV()
-        {
-            PositionID = position.ID,
-            Position = position,
-            UserId = user.Id,
-            User = user,
-        };
-        cv.CVAttributeValues.AddRange(userValues);
-        return cv;
+        PrepareAttributes(attributes, position.CVAttributes.Select(a => a.ID.ToString()).ToList());
     }
 
-    private async Task<ApplicationUser?> GetCurrentUser()
+    private void PrepareAttributes(List<CVAttribute> attributes, List<string> selected)
     {
-        var userId = userManager.GetUserId(User);
-        return await context.Users
-            .Include(u => u.CVAttributeValues)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-    }
-
-    private async Task<Position?> GetPosition(int? id)
-    {
-        if (id == null) return null;
-        return await context.Positions
-            .Include(p => p.Tags)
-            .Include(p => p.CVAttributes)
-            .FirstOrDefaultAsync(s => s.ID == id);
-    }
-
-    private async Task<List<CVAttribute>> GetAttributes(PositionViewModel positionVm)
-    {
-        return await context.CVAttributes
-            .Where(a => positionVm.Attributes.Contains(a.ID.ToString()))
-            .ToListAsync();
-    }
-
-    private async Task PrepareAttributes(List<string> selected)
-    {
-        var attributes = await context.CVAttributes
-            .Where(a => !a.IsMandatory)
-            .ToListAsync();
         var selectList = new List<SelectListItem>();
         foreach (var attr in attributes)
             selectList.Add(new SelectListItem(attr.Name, attr.ID.ToString(), selected.Contains(attr.ID.ToString())));

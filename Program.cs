@@ -1,4 +1,5 @@
 using CVManagement.Data;
+using CVManagement.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +37,12 @@ builder.Services.AddControllersWithViews((options) =>
 {
     options.ModelBindingMessageProvider.SetValueMustNotBeNullAccessor(_ => "The field is required.");
 });
+
+builder.Services.AddScoped<TagService>();
+builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<CVAttributeService>();
+builder.Services.AddScoped<CVService>();
+builder.Services.AddScoped<PositionService>();
 
 var app = builder.Build();
 

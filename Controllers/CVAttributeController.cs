@@ -1,26 +1,22 @@
-﻿using CVManagement.Data;
-using CVManagement.Models;
+﻿using CVManagement.Models;
+using CVManagement.Services;
 using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using NuGet.Packaging;
 
 namespace CVManagement.Controllers;
 
 [Authorize]
 public class CVAttributeController : ApplicationController
 {
-    private readonly ApplicationDbContext context;
+    private readonly CVAttributeService attributeService;
 
-    private readonly UserManager<ApplicationUser> userManager;
-
-    public CVAttributeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public CVAttributeController(
+        CVAttributeService attributeService)
     {
-        this.context = context;
-        this.userManager = userManager;
+        this.attributeService = attributeService;
     }
 
     public class CVAttributesViewModel
@@ -33,14 +29,10 @@ public class CVAttributeController : ApplicationController
     [HttpGet]
     public async Task<IActionResult> Index(string searchString)
     {
-        var query = context.CVAttributes.Select(a => a);
-        if (!string.IsNullOrWhiteSpace(searchString))
-            query = query.Where(a => a.Name.ToLower().Contains(searchString.ToLower()));
-        query = query.OrderBy(a => a.Name).Include(a => a.Category);
         return View(new CVAttributesViewModel()
         {
             SearchString = searchString,
-            CVAttributes = await query.ToListAsync()
+            CVAttributes = await attributeService.GetList(searchString),
         });
     }
 
@@ -58,11 +50,9 @@ public class CVAttributeController : ApplicationController
     {
         if (ModelState.IsValid)
         {
-            attribute.Format();
-            context.Add(attribute);
             try
             {
-                await context.SaveChangesAsync();
+                await attributeService.Create(attribute);
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException ex)
@@ -78,9 +68,7 @@ public class CVAttributeController : ApplicationController
     [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Delete([FromBody] List<int> selectedIds)
     {
-        var attributes = context.CVAttributes.Where(a => !a.IsMandatory && selectedIds.Contains(a.ID));
-        context.RemoveRange(attributes);
-        await context.SaveChangesAsync();
+        await attributeService.Delete(selectedIds);
         return Ok();
     }
 
@@ -88,16 +76,7 @@ public class CVAttributeController : ApplicationController
     [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> AddToUser([FromBody] List<int> selectedIds)
     {
-        var userId = userManager.GetUserId(User);
-        var user = await context.Users
-            .Include(u => u.CVAttributes)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-        var userAttributeIds = user!.CVAttributes.Select(a => a.ID).ToList();
-        var attributes = context.CVAttributes
-            .Where(a => !a.IsMandatory && selectedIds.Contains(a.ID) && !userAttributeIds.Contains(a.ID));
-        user.CVAttributes.AddRange(attributes);
-        context.Update(user);
-        await context.SaveChangesAsync();
+        await attributeService.AddAttributeToUser(User, selectedIds);
         return Ok();
     }
 
@@ -105,7 +84,7 @@ public class CVAttributeController : ApplicationController
     [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Edit(int id)
     {
-        var attribute = await context.CVAttributes.FindAsync(id);
+        var attribute = attributeService.Get(id);
         if (attribute == null) return NotFound();
         await PrepareCategories();
         return View(attribute);
@@ -118,11 +97,9 @@ public class CVAttributeController : ApplicationController
         if (id != attribute.ID) return NotFound();
         if (ModelState.IsValid)
         {
-            attribute.Format();
-            context.Update(attribute);
             try
             {
-                await context.SaveChangesAsync();
+                await attributeService.Update(attribute);
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException ex)
@@ -137,48 +114,23 @@ public class CVAttributeController : ApplicationController
     [Authorize(Roles = "Admin, Recruiter, Candidate")]
     public async Task<IActionResult> FillValue(int id)
     {
-        var attribute = await context.CVAttributes
-            .Include(a => a.Category)
-            .FirstOrDefaultAsync(s => s.ID == id);
+        var (attribute, attributeValue) = await attributeService.GetAttributeValue(User, id);
         if (attribute == null) return NotFound();
-        var userId = userManager.GetUserId(User);
-        var attributeValue = await context.CVAttributeValues
-            .FirstOrDefaultAsync(v => v.CVAttributeID == id && v.UserId == userId);
         return View(FillValueViewModel.Create(attribute, attributeValue));
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin, Recruiter, Candidate")]
-    public async Task<IActionResult> FillValue(int id, FillValueViewModel fillValueViewModel)
+    public async Task<IActionResult> FillValue(int id, FillValueViewModel vm)
     {
-        var attribute = await context.CVAttributes.FindAsync(id);
-        if (attribute == null) return NotFound();
-        var attributeValue = await context.CVAttributeValues.FindAsync(fillValueViewModel.ValueID);
-        if (attributeValue != null)
-            await UpdateAttributeValue(attributeValue, fillValueViewModel);
-        else
-            await CreateAttributeValue(attribute, fillValueViewModel);
-        return RedirectToPage("/Account/Manage/Index", new { area = "Identity" });
-    }
-
-    private async Task UpdateAttributeValue(CVAttributeValue attributeValue, FillValueViewModel fillValueViewModel)
-    {
-        attributeValue.Value = fillValueViewModel.SerializeValue();
-        context.Update(attributeValue);
-        await context.SaveChangesAsync();
-    }
-
-    private async Task CreateAttributeValue(CVAttribute attribute, FillValueViewModel fillValueViewModel)
-    {
-        var user = (await userManager.GetUserAsync(User))!;
-        var attributeValue = fillValueViewModel.CreateValueModel(attribute, user);
-        context.Add(attributeValue);
-        await context.SaveChangesAsync();
+        if (await attributeService.FillAttributeValue(User, id, vm))
+            return RedirectToPage("/Account/Manage/Index", new { area = "Identity" });
+        return NotFound();
     }
 
     private async Task PrepareCategories()
     {
-        var categories = await context.Categories.ToListAsync();
+        var categories = await attributeService.GetCategories();
         var selectList = new List<SelectListItem>();
         foreach (var category in categories)
             selectList.Add(new SelectListItem(category.Name, category.ID.ToString()));

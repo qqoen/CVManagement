@@ -13,15 +13,19 @@ public class PositionController : Controller
 
     private readonly CVAttributeService attributeService;
 
+    private readonly CVService cvService;
+
     private readonly SelectLookupService selectLookup;
 
     public PositionController(
         PositionService positionService,
         CVAttributeService attributeService,
+        CVService cvService,
         SelectLookupService selectLookup)
     {
         this.positionService = positionService;
         this.attributeService = attributeService;
+        this.cvService = cvService;
         this.selectLookup = selectLookup;
     }
 
@@ -133,10 +137,10 @@ public class PositionController : Controller
         if (position == null) return NotFound();
         try
         {
-            var cv = await positionService.GenerateCV(User, position);
+            var cv = await cvService.GenerateCV(User, position);
             return RedirectToAction("Details", "CV", new { id = cv.ID });
         }
-        catch (PositionService.PositionValidationException ex)
+        catch (CVService.CVValidationException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
             return View(nameof(Details), PositionViewModel.Create(position));

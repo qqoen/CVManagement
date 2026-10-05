@@ -1,4 +1,5 @@
 ﻿using CVManagement.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace CVManagement.Models;
 
@@ -15,4 +16,8 @@ public class CV
     public ApplicationUser? User { get; set; }
 
     public ICollection<CVAttributeValue> CVAttributeValues { get; } = new List<CVAttributeValue>();
+
+    [Display(Name = "Submission Date")]
+    [DisplayFormat(DataFormatString = "{0:MMM-dd yyyy}")]
+    public DateTimeOffset SubmissionDate { get; set; }
 }

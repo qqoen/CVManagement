@@ -1,7 +1,7 @@
 ﻿@page
 @model CVManagement.Areas.Identity.Pages.Account.Manage.CVModel
 @{
-    ViewData["Title"] = "My CVs";
+    ViewData["Title"] = "My CV Submissions";
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -22,6 +22,9 @@
                 <th>
                     Position
                 </th>
+                <th>
+                    @Html.DisplayNameFor(m => Model.CV[0].SubmissionDate)
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -32,6 +35,7 @@
                     <td>
                         <a asp-controller="CV" asp-action="Details" asp-route-id="@item.ID">@item.Position!.Title</a>
                     </td>
+                    <td>@Html.DisplayFor(m => item.SubmissionDate)</td>
                 </tr>
             }
         </tbody>

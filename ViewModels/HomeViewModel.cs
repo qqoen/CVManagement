@@ -12,6 +12,8 @@ public class HomeViewModel
 
     public int TotalCandidates { get; set; }
 
+    public int TotalRecruiters { get; set; }
+
     public int TotalCVs { get; set; }
 
     public List<string> Tags { get; set; } = [];

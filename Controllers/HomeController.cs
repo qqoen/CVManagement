@@ -38,6 +38,7 @@ public class HomeController : Controller
             PopularPositions = [],
             TotalPositions = await context.Positions.CountAsync(),
             TotalCandidates = (await userManager.GetUsersInRoleAsync(DbSeeder.CandidateRole)).Count,
+            TotalRecruiters = (await userManager.GetUsersInRoleAsync(DbSeeder.RecruiterRole)).Count,
             TotalCVs = await context.CV.CountAsync(),
             Tags = await context.Tags.Select(t => t.Name).ToListAsync(),
         });

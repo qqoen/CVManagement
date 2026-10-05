@@ -8,13 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 var variableName = "CONNECTION_LOCAL";
 var connectionString = Environment.GetEnvironmentVariable(variableName);
 
-if (connectionString == null)
-    throw new InvalidOperationException($"Environment variable {variableName} not found.");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException($"Environment variable '{variableName}' is not found or empty.");
 
 builder.Services.AddDbContext<ApplicationDbContext>((options) =>
 {
     options.UseNpgsql(connectionString);
 });
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 var identityBuilder = builder.Services.AddDefaultIdentity<ApplicationUser>((options) =>

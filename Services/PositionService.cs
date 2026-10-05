@@ -65,36 +65,50 @@ public class PositionService
         var attributes = await GetAttributes(vm);
         var position = vm.CreatePositionModel(tags, attributes);
         context.Add(position);
-        await context.SaveChangesAsync();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            DbExceptionHandler.Handle(ex, $"Title '{vm.Title}' already exists.");
+        }
     }
 
-    public async Task Update(Position position, PositionViewModel positionVm)
+    public async Task Update(Position position, PositionViewModel vm)
     {
-        var tags = await tagService.GetTrackableTags(positionVm.Tags);
-        var attributes = await GetAttributes(positionVm);
-        positionVm.UpdatePositionModel(position, tags, attributes);
+        var tags = await tagService.GetTrackableTags(vm.Tags);
+        var attributes = await GetAttributes(vm);
+        vm.UpdatePositionModel(position, tags, attributes);
         context.Update(position);
-        await context.SaveChangesAsync();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            DbExceptionHandler.Handle(ex, $"Title '{vm.Title}' already exists.");
+        }
     }
 
     public async Task Delete(List<int> selectedIds)
     {
         var positions = context.Positions.Where(p => selectedIds.Contains(p.ID));
         context.RemoveRange(positions);
-        await context.SaveChangesAsync();
+        await SaveChanges();
     }
 
     public async Task Duplicate(Position position)
     {
         context.Add(position.Clone());
-        await context.SaveChangesAsync();
+        await SaveChanges();
     }
 
     public async Task<CV> GenerateCV(ClaimsPrincipal principal, Position position)
     {
         var cv = await TryGenerateCV(principal, position);
         context.Add(cv);
-        await context.SaveChangesAsync();
+        await SaveChanges();
         return cv;
     }
 
@@ -137,5 +151,17 @@ public class PositionService
         return await context.CVAttributes
             .Where(a => positionVm.Attributes.Contains(a.ID.ToString()))
             .ToListAsync();
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            DbExceptionHandler.Handle(ex);
+        }
     }
 }

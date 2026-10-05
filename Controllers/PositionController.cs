@@ -4,26 +4,25 @@ using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace CVManagement.Controllers;
 
-public class PositionController : ApplicationController
+public class PositionController : Controller
 {
-    private readonly TagService tagService;
-
     private readonly PositionService positionService;
 
     private readonly CVAttributeService attributeService;
 
+    private readonly SelectLookupService selectLookup;
+
     public PositionController(
-        TagService tagService,
         PositionService positionService,
-        CVAttributeService attributeService)
+        CVAttributeService attributeService,
+        SelectLookupService selectLookup)
     {
-        this.tagService = tagService;
         this.positionService = positionService;
         this.attributeService = attributeService;
+        this.selectLookup = selectLookup;
     }
 
     [HttpGet]
@@ -44,7 +43,7 @@ public class PositionController : ApplicationController
     [Authorize(Roles = "Admin, Recruiter")]
     public async Task<IActionResult> Create()
     {
-        PrepareTags(await tagService.GetAll(), []);
+        ViewData["TagList"] = await selectLookup.GetTags();
         PrepareAttributes(await attributeService.GetOptional(), []);
         return View(new PositionViewModel());
     }
@@ -60,9 +59,9 @@ public class PositionController : ApplicationController
                 await positionService.Create(vm);
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateException ex)
+            catch (EntityUpdateException ex)
             {
-                HandleDbException(ex, $"Title '{vm.Title}' already exists.");
+                ModelState.AddModelError(string.Empty, ex.Message);
             }
         }
         return View(vm);
@@ -82,7 +81,7 @@ public class PositionController : ApplicationController
     {
         var position = await positionService.GetPosition(id);
         if (position == null) return NotFound();
-        PrepareTags(await tagService.GetAll(), position);
+        ViewData["TagList"] = await selectLookup.GetTags(position);
         PrepareAttributes(await attributeService.GetOptional(), position);
         return View(PositionViewModel.Create(position));
     }
@@ -100,9 +99,9 @@ public class PositionController : ApplicationController
                 await positionService.Update(position, positionVm);
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateException ex)
+            catch (EntityUpdateException ex)
             {
-                HandleDbException(ex, $"Title '{positionVm.Title}' already exists.");
+                ModelState.AddModelError(string.Empty, ex.Message);
             }
         }
         return View(positionVm);
@@ -119,9 +118,9 @@ public class PositionController : ApplicationController
             await positionService.Duplicate(position);
             return RedirectToAction(nameof(Index));
         }
-        catch (DbUpdateException ex)
+        catch (EntityUpdateException ex)
         {
-            HandleDbException(ex);
+            ModelState.AddModelError(string.Empty, ex.Message);
             return View(nameof(Details), PositionViewModel.Create(position));
         }
     }

@@ -2,23 +2,22 @@ using CVManagement.Services;
 using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CVManagement.Controllers;
 
 [Authorize]
-public class ProjectController : ApplicationController
+public class ProjectController : Controller
 {
     private readonly ProjectService projectService;
 
-    private readonly TagService tagService;
+    private readonly SelectLookupService selectLookup;
 
     public ProjectController(
         ProjectService projectService,
-        TagService tagService)
+        SelectLookupService selectLookup)
     {
         this.projectService = projectService;
-        this.tagService = tagService;
+        this.selectLookup = selectLookup;
     }
 
     [HttpGet]
@@ -38,7 +37,7 @@ public class ProjectController : ApplicationController
     [Authorize(Roles = "Admin, Candidate")]
     public async Task<IActionResult> Create()
     {
-        PrepareTags(await tagService.GetAll(), []);
+        ViewData["TagList"] = await selectLookup.GetTags();
         return View(new ProjectViewModel()
         {
             StartDate = DateTimeOffset.Now,
@@ -55,7 +54,7 @@ public class ProjectController : ApplicationController
             var project = await projectService.CreateProject(User, vm);
             return RedirectToAction(nameof(Details), new { id = project.ID });
         }
-        PrepareTags(await tagService.GetAll(), []);
+        ViewData["TagList"] = await selectLookup.GetTags();
         return View(vm);
     }
 
@@ -66,7 +65,7 @@ public class ProjectController : ApplicationController
         var project = await projectService.GetProject(id);
         if (project == null) return NotFound();
         if (!projectService.CanEdit(User, project)) return NotFound();
-        PrepareTags(await tagService.GetAll(), project);
+        ViewData["TagList"] = await selectLookup.GetTags(project);
         return View(ProjectViewModel.Create(project));
     }
 
@@ -84,12 +83,12 @@ public class ProjectController : ApplicationController
                 await projectService.UpdateProject(project, vm);
                 return RedirectToAction(nameof(Details), new { id = project.ID });
             }
-            catch (DbUpdateException ex)
+            catch (EntityUpdateException ex)
             {
-                HandleDbException(ex);
+                ModelState.AddModelError(string.Empty, ex.Message);
             }
         }
-        PrepareTags(await tagService.GetAll(), project);
+        ViewData["TagList"] = await selectLookup.GetTags(project);
         return View(vm);
     }
 

@@ -4,17 +4,15 @@ using CVManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace CVManagement.Controllers;
 
 [Authorize]
-public class CVAttributeController : ApplicationController
+public class CVAttributeController : Controller
 {
     private readonly CVAttributeService attributeService;
 
-    public CVAttributeController(
-        CVAttributeService attributeService)
+    public CVAttributeController(CVAttributeService attributeService)
     {
         this.attributeService = attributeService;
     }
@@ -55,9 +53,9 @@ public class CVAttributeController : ApplicationController
                 await attributeService.Create(attribute);
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateException ex)
+            catch (EntityUpdateException ex)
             {
-                HandleUniqueNameException(ex, attribute);
+                ModelState.AddModelError(string.Empty, ex.Message);
             }
         }
         await PrepareCategories();
@@ -102,9 +100,9 @@ public class CVAttributeController : ApplicationController
                 await attributeService.Update(attribute);
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateException ex)
+            catch (EntityUpdateException ex)
             {
-                HandleUniqueNameException(ex, attribute);
+                ModelState.AddModelError(string.Empty, ex.Message);
             }
         }
         return View(attribute);
@@ -135,11 +133,5 @@ public class CVAttributeController : ApplicationController
         foreach (var category in categories)
             selectList.Add(new SelectListItem(category.Name, category.ID.ToString()));
         ViewData["Categories"] = selectList;
-    }
-
-    private void HandleUniqueNameException(DbUpdateException ex, CVAttribute attribute)
-    {
-        var constraintName = "IX_CVAttributes_Name";
-        HandleDbException(ex, $"Name '{attribute.Name}' already exists.", constraintName);
     }
 }

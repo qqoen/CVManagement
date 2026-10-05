@@ -39,6 +39,7 @@ builder.Services.AddControllersWithViews((options) =>
 });
 
 builder.Services.AddScoped<TagService>();
+builder.Services.AddScoped<SelectLookupService>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<CVAttributeService>();
 builder.Services.AddScoped<CVService>();

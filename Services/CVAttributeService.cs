@@ -14,6 +14,8 @@ public class CVAttributeService
 
     private readonly UserManager<ApplicationUser> userManager;
 
+    private readonly string nameConstraint = "IX_CVAttributes_Name";
+
     public CVAttributeService(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     {
         this.context = context;
@@ -47,21 +49,35 @@ public class CVAttributeService
     {
         attribute.Format();
         context.Add(attribute);
-        await context.SaveChangesAsync();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            DbExceptionHandler.Handle(ex, $"Name '{attribute.Name}' already exists.", nameConstraint);
+        }
     }
 
     public async Task Update(CVAttribute attribute)
     {
         attribute.Format();
         context.Update(attribute);
-        await context.SaveChangesAsync();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            DbExceptionHandler.Handle(ex, $"Name '{attribute.Name}' already exists.", nameConstraint);
+        }
     }
 
     public async Task Delete(List<int> selectedIds)
     {
         var attributes = context.CVAttributes.Where(a => !a.IsMandatory && selectedIds.Contains(a.ID));
         context.RemoveRange(attributes);
-        await context.SaveChangesAsync();
+        await SaveChanges();
     }
 
     public async Task AddAttributeToUser(ClaimsPrincipal principal, List<int> selectedIds)
@@ -75,7 +91,7 @@ public class CVAttributeService
             .Where(a => !a.IsMandatory && selectedIds.Contains(a.ID) && !userAttributeIds.Contains(a.ID));
         user.CVAttributes.AddRange(attributes);
         context.Update(user);
-        await context.SaveChangesAsync();
+        await SaveChanges();
     }
 
     public async Task<(CVAttribute?, CVAttributeValue?)> GetAttributeValue(ClaimsPrincipal principal, int attributeId)
@@ -106,7 +122,7 @@ public class CVAttributeService
     {
         attributeValue.Value = vm.SerializeValue();
         context.Update(attributeValue);
-        await context.SaveChangesAsync();
+        await SaveChanges();
     }
 
     public async Task CreateAttributeValue(ClaimsPrincipal principal, CVAttribute attribute, FillValueViewModel vm)
@@ -114,11 +130,23 @@ public class CVAttributeService
         var user = (await userManager.GetUserAsync(principal))!;
         var attributeValue = vm.CreateValueModel(attribute, user);
         context.Add(attributeValue);
-        await context.SaveChangesAsync();
+        await SaveChanges();
     }
 
     public async Task<List<Category>> GetCategories()
     {
         return await context.Categories.ToListAsync();
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            DbExceptionHandler.Handle(ex);
+        }
     }
 }

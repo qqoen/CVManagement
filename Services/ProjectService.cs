@@ -38,7 +38,7 @@ public class ProjectService
         var tags = await tagService.GetTrackableTags(vm.Tags);
         var project = vm.CreateProjectModel(userManager.GetUserId(user)!, tags);
         context.Add(project);
-        await context.SaveChangesAsync();
+        await SaveChanges();
         return project;
     }
 
@@ -47,7 +47,14 @@ public class ProjectService
         var tags = await tagService.GetTrackableTags(vm.Tags);
         vm.UpdateProjectModel(project, tags);
         context.Update(project);
-        await context.SaveChangesAsync();
+        await SaveChanges();
+    }
+    public async Task Delete(ClaimsPrincipal user, List<int> selectedIds)
+    {
+        var userId = userManager.GetUserId(user);
+        var projects = context.Project.Where(p => selectedIds.Contains(p.ID) && p.UserId == userId);
+        context.RemoveRange(projects);
+        await SaveChanges();
     }
 
     public bool CanView(ClaimsPrincipal user, Project project)
@@ -62,11 +69,15 @@ public class ProjectService
         return project.UserId == userId || user.IsInRole(DbSeeder.AdminRole);
     }
 
-    public async Task Delete(ClaimsPrincipal user, List<int> selectedIds)
+    private async Task SaveChanges()
     {
-        var userId = userManager.GetUserId(user);
-        var projects = context.Project.Where(p => selectedIds.Contains(p.ID) && p.UserId == userId);
-        context.RemoveRange(projects);
-        await context.SaveChangesAsync();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            DbExceptionHandler.Handle(ex);
+        }
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CVManagement.Controllers;
 
 [Authorize]
-public class CVController : ApplicationController
+public class CVController : Controller
 {
     private readonly CVService cvService;
 

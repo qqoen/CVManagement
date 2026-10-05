@@ -31,7 +31,7 @@ public class CVService
     public async Task Update(CV cv)
     {
         context.Update(cv);
-        await context.SaveChangesAsync();
+        await SaveChanges();
     }
 
     public async Task Delete(ClaimsPrincipal principal, List<int> selectedIds)
@@ -39,11 +39,23 @@ public class CVService
         var userId = userManager.GetUserId(principal);
         var cvs = context.CV.Where(cv => selectedIds.Contains(cv.ID) && cv.UserId == userId);
         context.RemoveRange(cvs);
-        await context.SaveChangesAsync();
+        await SaveChanges();
     }
 
     public bool IsOwner(ClaimsPrincipal principal, CV cv)
     {
         return cv.UserId == userManager.GetUserId(principal);
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            DbExceptionHandler.Handle(ex);
+        }
     }
 }

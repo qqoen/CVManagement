@@ -16,5 +16,7 @@ public class HomeViewModel
 
     public int TotalCVs { get; set; }
 
+    public int LastDayCVs { get; set; }
+
     public List<string> Tags { get; set; } = [];
 }

@@ -51,8 +51,15 @@ public class ProjectController : Controller
     {
         if (ModelState.IsValid)
         {
-            var project = await projectService.CreateProject(User, vm);
-            return RedirectToAction(nameof(Details), new { id = project.ID });
+            try
+            {
+                var project = await projectService.CreateProject(User, vm);
+                return RedirectToAction(nameof(Details), new { id = project.ID });
+            }
+            catch (EntityUpdateException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+            }
         }
         ViewData["TagList"] = await selectLookup.GetTags();
         return View(vm);

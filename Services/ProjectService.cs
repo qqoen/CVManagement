@@ -49,6 +49,7 @@ public class ProjectService
         context.Update(project);
         await SaveChanges();
     }
+
     public async Task Delete(ClaimsPrincipal user, List<int> selectedIds)
     {
         var userId = userManager.GetUserId(user);
@@ -77,7 +78,7 @@ public class ProjectService
         }
         catch (DbUpdateException ex)
         {
-            DbExceptionHandler.Handle(ex);
+            DbExceptionHandler.Handle(ex, $"Project with the same name already exists.");
         }
     }
 }

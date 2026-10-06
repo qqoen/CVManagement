@@ -32,6 +32,9 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        var beforeDate = DateTimeOffset.Now.AddDays(-1);
+        var lastDayCVs = await context.CV.Where(cv => cv.SubmissionDate >= beforeDate).CountAsync();
+
         return View(new HomeViewModel()
         {
             LatestPositions = await positionService.GetLatestPositions(MaxLatestPositions),
@@ -40,6 +43,7 @@ public class HomeController : Controller
             TotalCandidates = (await userManager.GetUsersInRoleAsync(DbSeeder.CandidateRole)).Count,
             TotalRecruiters = (await userManager.GetUsersInRoleAsync(DbSeeder.RecruiterRole)).Count,
             TotalCVs = await context.CV.CountAsync(),
+            LastDayCVs = lastDayCVs,
             Tags = await context.Tags.Select(t => t.Name).ToListAsync(),
         });
     }

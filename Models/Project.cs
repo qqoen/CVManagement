@@ -1,9 +1,11 @@
 ﻿using CVManagement.Data;
 using CVManagement.Models.Validation;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace CVManagement.Models;
 
+[Index(nameof(Name), nameof(UserId), IsUnique = true)]
 public class Project
 {
     public int ID { get; set; }

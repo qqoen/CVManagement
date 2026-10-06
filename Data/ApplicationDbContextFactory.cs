@@ -11,10 +11,11 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
         var connectionString = Environment.GetEnvironmentVariable(variableName);
 
         if (string.IsNullOrWhiteSpace(connectionString))
-            connectionString = "Host=192.168.100.3;Port=5432;Database=cvmanagement;Username=postgres;Password=0000";
+            connectionString = "Host=192.168.100.2;Port=5432;Database=cvmanagement;Username=postgres;Password=0000;Include Error Detail=true";
 
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
         optionsBuilder.UseNpgsql(connectionString);
+        optionsBuilder.EnableDetailedErrors();
 
         return new ApplicationDbContext(optionsBuilder.Options);
     }
